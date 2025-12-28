@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineAction, ApplicationBuilder, GraphBuilder, createState } from "../src";
+import { defineAction, ApplicationBuilder, GraphBuilder, createState, createStateWithDefaults } from "../src";
 
 const counter = defineAction({
     reads: z.object({ counter: z.number() }),
@@ -36,5 +36,21 @@ export const appCorrect = new ApplicationBuilder()
 console.log('Application built successfully:', {
     entrypoint: appCorrect.entrypoint,
     initialState: appCorrect.initialState.counter
+});
+
+// ✨ Power-user mode: Use defaults from schema
+const counterSchemaWithDefaults = z.object({
+    counter: z.number().default(0)
+});
+
+export const appWithDefaults = new ApplicationBuilder()
+    .withGraph(graph)
+    .withEntrypoint('counter')
+    .withState(createStateWithDefaults(counterSchemaWithDefaults))  // No data param needed!
+    .build();
+
+console.log('Application with defaults:', {
+    entrypoint: appWithDefaults.entrypoint,
+    initialState: appWithDefaults.initialState.counter
 });
 

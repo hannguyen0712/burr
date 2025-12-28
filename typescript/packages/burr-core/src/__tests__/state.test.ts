@@ -18,7 +18,7 @@
  */
 
 import { z } from 'zod';
-import { State, createState } from '../state';
+import { State, createState, createStateWithDefaults } from '../state';
 
 // Test schema for structured state tests
 const TestStateSchema = z.object({
@@ -320,6 +320,57 @@ describe('State', () => {
     // Original unchanged
     expect(state.foo).toBe('bar');
     expect(state.count).toBe(0);
+  });
+
+  // ==========================================================================
+  // createStateWithDefaults Tests
+  // Demonstrates: Power-user mode with Zod defaults
+  // ==========================================================================
+
+  test('test_createStateWithDefaults_no_data', () => {
+    // Demonstrates: State created with Zod defaults, no explicit data needed
+    const SchemaWithDefaults = z.object({
+      counter: z.number().default(0),
+      name: z.string().default('untitled'),
+      tags: z.array(z.string()).default([]),
+    });
+
+    const state = createStateWithDefaults(SchemaWithDefaults);
+    
+    expect(state.counter).toBe(0);
+    expect(state.name).toBe('untitled');
+    expect(state.tags).toEqual([]);
+  });
+
+  test('test_createStateWithDefaults_partial_override', () => {
+    // Demonstrates: Partial data overrides some defaults
+    const SchemaWithDefaults = z.object({
+      counter: z.number().default(0),
+      name: z.string().default('untitled'),
+      tags: z.array(z.string()).default([]),
+    });
+
+    const state = createStateWithDefaults(SchemaWithDefaults, { counter: 42 });
+    
+    expect(state.counter).toBe(42); // Overridden
+    expect(state.name).toBe('untitled'); // Default
+    expect(state.tags).toEqual([]); // Default
+  });
+
+  test('test_createStateWithDefaults_full_data', () => {
+    // Demonstrates: Can still provide full data
+    const SchemaWithDefaults = z.object({
+      counter: z.number().default(0),
+      name: z.string().default('untitled'),
+    });
+
+    const state = createStateWithDefaults(SchemaWithDefaults, {
+      counter: 99,
+      name: 'custom',
+    });
+    
+    expect(state.counter).toBe(99);
+    expect(state.name).toBe('custom');
   });
 });
 

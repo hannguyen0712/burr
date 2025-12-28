@@ -794,3 +794,31 @@ export function createState<TSchema extends z.ZodType<Record<string, any>>>(
 ): StateInstance<TSchema, TSchema, TSchema> {
   return new State(schema, initialData) as StateInstance<TSchema, TSchema, TSchema>;
 }
+
+/**
+ * Factory function to create a new State instance with defaults (power-user mode)
+ *
+ * This function allows you to create state without providing explicit data,
+ * relying on Zod's `.default()` values to fill in the fields at runtime.
+ *
+ * @example
+ * ```typescript
+ * const MyStateSchema = z.object({
+ *   count: z.number().default(0),
+ *   name: z.string().default('untitled')
+ * });
+ *
+ * // No data parameter needed - Zod fills defaults
+ * const state = createStateWithDefaults(MyStateSchema);
+ *
+ * // Or provide partial data to override some defaults
+ * const state2 = createStateWithDefaults(MyStateSchema, { count: 5 });
+ * ```
+ */
+export function createStateWithDefaults<TSchema extends z.ZodType<Record<string, any>>>(
+  schema: TSchema,
+  initialData?: Partial<z.infer<TSchema>>
+): StateInstance<TSchema, TSchema, TSchema> {
+  const validatedData = schema.parse(initialData ?? {});
+  return new State(schema, validatedData) as StateInstance<TSchema, TSchema, TSchema>;
+}

@@ -27,6 +27,7 @@ export {
   State,
   type StateInstance,
   createState,
+  createStateWithDefaults,
   type Operation,
   type OperationConstructor,
   SetFieldsOperation,
