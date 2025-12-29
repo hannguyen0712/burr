@@ -50,7 +50,7 @@ npm install @apache-burr/core zod
 
 ```typescript
 import { z } from 'zod';
-import { defineAction, GraphBuilder, ApplicationBuilder, createState } from '@apache-burr/core';
+import { defineAction, GraphBuilder, ApplicationBuilder, createState, createStateWithDefaults } from '@apache-burr/core';
 
 // 1. Define actions
 const increment = defineAction({
@@ -77,13 +77,23 @@ const graph = new GraphBuilder()
   )
   .build();
 
-// 3. Build application
+// 3. Build application (safe mode - explicit data)
 const app = new ApplicationBuilder()
   .withGraph(graph)
   .withEntrypoint('increment')
   .withState(createState(
     z.object({ count: z.number() }),
     { count: 0 }
+  ))
+  .build();
+
+// 3b. Or use power-user mode with Zod defaults
+const appWithDefaults = new ApplicationBuilder()
+  .withGraph(graph)
+  .withEntrypoint('increment')
+  .withState(createStateWithDefaults(
+    z.object({ count: z.number().default(0) })
+    // No data param needed! Zod fills defaults at runtime
   ))
   .build();
 
@@ -102,6 +112,8 @@ const app = new ApplicationBuilder()
 | Feature | Python | TypeScript | Status | Notes |
 |---------|--------|------------|--------|-------|
 | **Immutable state** | ✅ | ✅ | **Complete** | Copy-on-write with structural sharing |
+| **createState()** | ✅ | ✅ | **Complete** | Safe mode - explicit data required |
+| **createStateWithDefaults()** | ❌ | ✅ | **TS-only** | Power mode - Zod defaults optional data |
 | **State.update()** | ✅ | ✅ | **Complete** | Type-safe, dynamic schema extension |
 | **State.get()** | ✅ | ✅ | **Complete** | Plus direct property access via Proxy |
 | **State.has()** | ✅ | ✅ | **Complete** | Runtime key existence check |
@@ -242,6 +254,18 @@ const app = new ApplicationBuilder()
    - Works in both orders: `withState()` → `withGraph()` or `withGraph()` → `withState()`
    - Descriptive compile-time errors show exactly what's missing
    - State must be a superset of graph requirements (can have extra fields)
+
+9. **Dual State Creation Modes**
+   - **Safe mode** (`createState`): Explicit data required at compile-time
+   - **Power mode** (`createStateWithDefaults`): Optional data, Zod defaults fill at runtime
+   - Opt-in convenience without sacrificing safety by default
+   ```typescript
+   // Safe: compile error if data missing
+   createState(schema, { count: 0 })
+   
+   // Power: no data needed if schema has defaults
+   createStateWithDefaults(z.object({ count: z.number().default(0) }))
+   ```
 
 ## Design Principles
 

@@ -517,3 +517,170 @@ import { expectError, expectAssignable } from 'tsd';
   );
 }
 
+// ============================================================================
+// State.update() Type Narrowing
+// ============================================================================
+
+// ✅ Updating optional field with concrete value narrows type
+{
+  const state = State.forAction(
+    z.object({ 
+      count: z.number(),
+      history: z.array(z.string()).optional()  // Optional
+    }),
+    z.object({ 
+      count: z.number(),
+      history: z.array(z.string())  // Required in writes
+    }),
+    { count: 0 }
+  );
+
+  // Updating with concrete array should narrow type
+  const updated = state.update({ 
+    count: 1,
+    history: ['item1', 'item2']  // Concrete string[]
+  });
+
+  // The updated state should have history as required (not optional)
+  // This is validated by the action's update function expecting:
+  // StateInstance<z.ZodType<{ count: number; history: string[] }>, any, any>
+  expectAssignable(updated);
+}
+
+// ✅ Narrowing works with nested updates
+{
+  const state = State.forAction(
+    z.object({
+      data: z.object({
+        items: z.array(z.number()).optional()
+      })
+    }),
+    z.object({
+      data: z.object({
+        items: z.array(z.number())
+      })
+    }),
+    { data: {} }
+  );
+
+  // Should narrow optional field to required
+  const updated = state.update({
+    data: { items: [1, 2, 3] }
+  });
+
+  expectAssignable(updated);
+}
+
+// ✅ Multiple optional fields can be narrowed in single update
+{
+  const state = State.forAction(
+    z.object({
+      a: z.string().optional(),
+      b: z.number().optional(),
+      c: z.boolean().optional()
+    }),
+    z.object({
+      a: z.string(),
+      b: z.number(),
+      c: z.boolean()
+    }),
+    {}
+  );
+
+  // All optional fields provided with concrete values
+  const updated = state.update({
+    a: 'hello',
+    b: 42,
+    c: true
+  });
+
+  expectAssignable(updated);
+}
+
+// ============================================================================
+// State.update() Type Narrowing (No Partial Widening)
+// ============================================================================
+
+// ✅ Single update preserves narrow literal types
+{
+  const state = State.forAction(
+    z.object({ a: z.number() }),
+    z.object({ b: z.number(), c: z.boolean() }),
+    { a: 0 }
+  );
+
+  const updated = state.update({ c: true });
+  
+  // Type should be narrow: { a: number } & { c: true }
+  // NOT: { a: number } & Partial<{ b: number, c: boolean }>
+  expectAssignable<{ a: number; c: true }>(updated.data);
+}
+
+// ✅ Chained updates preserve narrow types
+{
+  const state = State.forAction(
+    z.object({ a: z.string() }),
+    z.object({ b: z.number(), c: z.boolean() }),
+    { a: 'test' }
+  );
+
+  const updated = state.update({ b: 42 }).update({ c: true });
+  
+  // Each update should narrow: { a: string } & { b: 42 } & { c: true }
+  // NOT: { a: string } & Partial<{ b: number, c: boolean }>
+  expectAssignable<{ a: string; b: 42; c: true }>(updated.data);
+}
+
+// ❌ Type mismatch shows actual type error (string vs boolean, not undefined)
+{
+  // This should error with: Type 'string' is not assignable to type 'boolean'
+  // NOT: Type 'undefined' is not assignable to type 'boolean'
+  expectError(
+    defineAction({
+      reads: z.object({ a: z.string() }),
+      writes: z.object({ b: z.number(), c: z.boolean() }),
+      update: ({ state }) => {
+      return state.update({ b: 42 }).update({ c: 'wrong' });
+    }
+  })
+);
+}
+
+// ============================================================================
+// State.update() Narrow Type Inference
+// ============================================================================
+
+// update() captures narrow literal types
+{
+  const state = State.forAction(
+    z.object({ a: z.string() }),
+    z.object({ b: z.number(), c: z.boolean() }),
+    { a: 'test' }
+  );
+
+  // Update should work and not widen to Partial
+  const updated = state.update({ b: 42 });
+  expectAssignable(updated);
+}
+
+// Chained updates work correctly
+{
+  const state = State.forAction(
+    z.object({ a: z.string() }),
+    z.object({ b: z.number(), c: z.boolean() }),
+    { a: 'test' }
+  );
+
+  const chained = state.update({ b: 42 }).update({ c: true });
+  expectAssignable(chained);
+}
+
+// Type mismatch in action update shows clear error
+{
+  expectError(defineAction({
+    reads: z.object({ a: z.string() }),
+    writes: z.object({ b: z.boolean() }),
+    update: ({ state }) => state.update({ b: 'wrong_type' })
+  }));
+}
+

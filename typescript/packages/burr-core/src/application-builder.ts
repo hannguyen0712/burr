@@ -83,13 +83,7 @@ export class ApplicationBuilder<
       ? Graph<TNewGraphState>
       : TAppState extends TNewGraphState
         ? Graph<TNewGraphState>
-        : Graph<TNewGraphState> & {
-            '❌ ERROR: State is missing fields required by graph': {
-              'Graph requires': TNewGraphState;
-              'State provides': TAppState;
-              'Fix': 'Add missing fields to your state schema';
-            };
-          }
+        : { '❌ State schema must extend graph requirements': TNewGraphState }
   ): ApplicationBuilder<
     [TAppState] extends [never] ? TNewGraphState : TAppState,
     TNewGraphState
@@ -176,13 +170,7 @@ export class ApplicationBuilder<
       ? StateInstance<TNewStateSchema, any, any>
       : z.infer<TNewStateSchema> extends TGraphState
         ? StateInstance<TNewStateSchema, any, any>
-        : StateInstance<TNewStateSchema, any, any> & {
-            '❌ ERROR: State is missing fields required by graph': {
-              'Graph requires': TGraphState;
-              'State provides': z.infer<TNewStateSchema>;
-              'Fix': 'Add missing fields to your state schema';
-            };
-          }
+        : { '❌ State schema must extend graph requirements': TGraphState }
   ): ApplicationBuilder<
     [TAppState] extends [never] ? z.infer<TNewStateSchema> : TAppState,
     TGraphState

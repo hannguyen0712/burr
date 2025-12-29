@@ -27,23 +27,39 @@ import { Action } from './action';
 // ============================================================================
 
 /**
- * Converts a union type to an intersection type.
- * Example: UnionToIntersection<{ a: string } | { b: number }> = { a: string } & { b: number }
+ * Replaces Record<string, never> with {} to avoid type pollution.
+ * Zod's z.object({}) infers to Record<string, never>, which breaks
+ * extends checks in complex generic chains.
  */
-type UnionToIntersection<U> = 
-  (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never;
+type FixEmptySchema<T> = T extends Record<string, never> ? {} : T;
 
 /**
- * Extracts and merges all read and write schemas from a record of actions.
- * This creates a union of all state fields that actions interact with.
+ * Merges all state fields from actions into a single type.
+ * 
+ * NOTE: TypeScript naming is backwards from set theory!
+ * - TS `&` (intersection) = merge fields (like set union)
+ * - TS `|` (union) = either/or (like set disjunction)
+ * 
+ * The mapped type produces a union: Action1State | Action2State | ...
+ * We convert to intersection: Action1State & Action2State & ...
+ * This merges all fields that any action needs.
+ * 
+ * Example:
+ * - Action1: {} & {a} = {a}
+ * - Action2: {a} & {b} = {a,b}
+ * - Result: {a} & {a,b} = {a,b}
  */
-type UnionOfActionStates<TActions extends Record<string, Action<any, any, any, any>>> = 
-  UnionToIntersection<{
+type MergeActionStates<TActions extends Record<string, Action<any, any, any, any>>> = 
+  // Convert union → intersection using distributive conditional type trick
+  ({
     [K in keyof TActions]: 
       TActions[K] extends Action<infer R, infer W, any, any>
-        ? z.infer<R> & z.infer<W>
+        ? FixEmptySchema<z.infer<R>> & FixEmptySchema<z.infer<W>>
         : never
-  }[keyof TActions]>;
+  }[keyof TActions] extends infer U
+    ? (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never
+    : never
+  );
 
 /**
  * Infers the state type based on builder mode:
@@ -54,7 +70,7 @@ type InferStateType<
   TStateSchema extends z.ZodType,
   TActions extends Record<string, Action<any, any, any, any>>
 > = TStateSchema extends z.ZodNever 
-  ? UnionOfActionStates<TActions>
+  ? MergeActionStates<TActions>
   : z.infer<TStateSchema>;
 
 /**
@@ -285,7 +301,7 @@ export class GraphBuilder<
    * @throws Error if no actions have been added
    * @returns Immutable Graph instance with computed state type
    */
-  build(): Graph<UnionOfActionStates<TActions>> {
+  build(): Graph<MergeActionStates<TActions>> {
     // Validate: Must have at least one action
     const actionNames = Object.keys(this._actions);
     if (actionNames.length === 0) {
@@ -302,7 +318,7 @@ export class GraphBuilder<
       condition
     }));
 
-    return new Graph<UnionOfActionStates<TActions>>(this._actions, transitions);
+    return new Graph<MergeActionStates<TActions>>(this._actions, transitions);
   }
 }
 

@@ -379,6 +379,7 @@ type NoExcessProperties<Allowed, Actual> = {
     : `❌ ERROR: Property '${K & string}' is not in writes schema. Remove it or add to writes.`;
 };
 
+
 // ============================================================================
 // State Class
 // ============================================================================
@@ -511,6 +512,9 @@ export class State<
    * 2. Deep clone ONLY fields that are read (structural sharing for others)
    * 3. Mutate in place
    * 4. Validate against schema
+   * 
+   * Note: This is a low-level method. Prefer update(), increment(), append(), extend()
+   * which provide better type safety and automatically extend the readable schema.
    */
   applyOperation<TOut extends Record<string, any>>(
     operation: Operation<Record<string, any>, TOut>
@@ -543,6 +547,7 @@ export class State<
     const validatedData = extendedSchema.parse(newData);
 
     // Return new State instance with extended schema
+    // Note: Readable schema is NOT extended here - use update() for that
     // Cast through unknown: runtime has correct schema, TypeScript can't verify alignment
     return new State(extendedSchema, validatedData, {
       readable: this._readableSchema,
@@ -555,16 +560,28 @@ export class State<
    * Dynamically extends the schema to include new fields, maintaining alignment
    * between runtime schema and compile-time types.
    * 
+   * Type narrowing: When updating optional fields with concrete values,
+   * the field type narrows from `T | undefined` to `T`.
+   * 
+   * Read schema growth: Fields you write become readable. This ensures you can
+   * read back what you just wrote, which is essential for chained updates.
+   * 
    * Only allows updating fields defined in the writable schema.
    * Excess properties are rejected at compile-time.
+   * 
+   * @example
+   * ```typescript
+   * // state: { count?: number }
+   * const updated = state.update({ count: 5 });
+   * // updated: { count: number }  ✅ Narrowed to required
+   * // Can now read: updated.count  ✅ Added to readable schema
+   * ```
    */
-  update<const TUpdates extends Partial<z.infer<TWritableSchema>>>(
-    updates: NoExcessProperties<Partial<z.infer<TWritableSchema>>, TUpdates>
+  update<const TUpdates>(
+    updates: TUpdates & NoExcessProperties<Partial<z.infer<TWritableSchema>>, TUpdates>
   ): StateInstance<
-    TSchema extends z.ZodObject<infer TShape>
-      ? z.ZodObject<TShape & { [K in keyof TUpdates]: z.ZodType<TUpdates[K]> }>
-      : z.ZodType<z.infer<TSchema> & TUpdates>,
-    TReadableSchema,
+    z.ZodType<z.infer<TSchema> & TUpdates>,
+    z.ZodType<z.infer<TReadableSchema> & TUpdates>,
     TWritableSchema
   > {
     // Runtime validation: ensure updates match writable schema
@@ -572,7 +589,7 @@ export class State<
       this._writableSchema.partial().parse(updates);
     }
 
-    // Extend the schema with new fields
+    // Extend the data schema with new fields
     let extendedSchema: any;
     if (this._schema instanceof z.ZodObject) {
       const extension: Record<string, z.ZodTypeAny> = {};
@@ -588,12 +605,28 @@ export class State<
       extendedSchema = this._schema;
     }
 
+    // Extend the readable schema with updated fields (you can read what you wrote)
+    let extendedReadableSchema: any;
+    if (this._readableSchema instanceof z.ZodObject) {
+      const readExtension: Record<string, z.ZodTypeAny> = {};
+      for (const key in updates) {
+        if (!(key in this._readableSchema.shape)) {
+          readExtension[key] = z.unknown();
+        }
+      }
+      extendedReadableSchema = Object.keys(readExtension).length > 0
+        ? this._readableSchema.extend(readExtension)
+        : this._readableSchema;
+    } else {
+      extendedReadableSchema = this._readableSchema;
+    }
+
     // Create new data
     const newData = { ...this._data, ...updates };
 
-    // Return new State with extended schema
+    // Return new State with extended schemas
     return new State(extendedSchema, newData, {
-      readable: this._readableSchema,
+      readable: extendedReadableSchema,
       writable: this._writableSchema,
     }) as any;
   }
@@ -602,6 +635,9 @@ export class State<
    * Appends values to one or more array fields (type-safe).
    * Only allows appending to fields defined in the writable schema.
    * Excess properties are rejected at compile-time.
+   * 
+   * The readable schema is extended with appended fields, allowing you to
+   * read back what you just modified.
    * 
    * @example
    * state.append({ items: newItem, tags: newTag })
@@ -613,7 +649,11 @@ export class State<
       { [K in ArrayKeys<z.infer<TWritableSchema>>]?: ArrayElement<z.infer<TWritableSchema>[K]> },
       TUpdates
     >
-  ): StateInstance<TSchema, TReadableSchema, TWritableSchema> {
+  ): StateInstance<
+    TSchema,
+    z.ZodType<z.infer<TReadableSchema> & TUpdates>,
+    TWritableSchema
+  > {
     let currentState: StateInstance<TSchema, TReadableSchema, TWritableSchema> = this as any;
     
     for (const [key, value] of Object.entries(updates)) {
@@ -625,13 +665,35 @@ export class State<
       ) as StateInstance<TSchema, TReadableSchema, TWritableSchema>;
     }
     
-    return currentState;
+    // Extend readable schema with appended fields
+    let extendedReadableSchema: any;
+    if (this._readableSchema instanceof z.ZodObject) {
+      const readExtension: Record<string, z.ZodTypeAny> = {};
+      for (const key in updates) {
+        if (!(key in this._readableSchema.shape)) {
+          readExtension[key] = z.unknown();
+        }
+      }
+      extendedReadableSchema = Object.keys(readExtension).length > 0
+        ? this._readableSchema.extend(readExtension)
+        : this._readableSchema;
+    } else {
+      extendedReadableSchema = this._readableSchema;
+    }
+    
+    return new State(currentState._schema, currentState._data, {
+      readable: extendedReadableSchema,
+      writable: currentState._writableSchema,
+    }) as any;
   }
 
   /**
    * Extends one or more array fields with multiple values (type-safe).
    * Only allows extending fields defined in the writable schema.
    * Excess properties are rejected at compile-time.
+   * 
+   * The readable schema is extended with modified fields, allowing you to
+   * read back what you just modified.
    * 
    * @example
    * state.extend({ items: [item1, item2], tags: [tag1, tag2] })
@@ -643,7 +705,11 @@ export class State<
       { [K in ArrayKeys<z.infer<TWritableSchema>>]?: ArrayElement<z.infer<TWritableSchema>[K]>[] },
       TUpdates
     >
-  ): StateInstance<TSchema, TReadableSchema, TWritableSchema> {
+  ): StateInstance<
+    TSchema,
+    z.ZodType<z.infer<TReadableSchema> & TUpdates>,
+    TWritableSchema
+  > {
     let currentState: StateInstance<TSchema, TReadableSchema, TWritableSchema> = this as any;
     
     for (const [key, values] of Object.entries(updates)) {
@@ -655,13 +721,35 @@ export class State<
       ) as StateInstance<TSchema, TReadableSchema, TWritableSchema>;
     }
     
-    return currentState;
+    // Extend readable schema with modified fields
+    let extendedReadableSchema: any;
+    if (this._readableSchema instanceof z.ZodObject) {
+      const readExtension: Record<string, z.ZodTypeAny> = {};
+      for (const key in updates) {
+        if (!(key in this._readableSchema.shape)) {
+          readExtension[key] = z.unknown();
+        }
+      }
+      extendedReadableSchema = Object.keys(readExtension).length > 0
+        ? this._readableSchema.extend(readExtension)
+        : this._readableSchema;
+    } else {
+      extendedReadableSchema = this._readableSchema;
+    }
+    
+    return new State(currentState._schema, currentState._data, {
+      readable: extendedReadableSchema,
+      writable: currentState._writableSchema,
+    }) as any;
   }
 
   /**
    * Increments one or more numeric fields (type-safe).
    * Only allows incrementing fields defined in the writable schema.
    * Excess properties are rejected at compile-time.
+   * 
+   * The readable schema is extended with incremented fields, allowing you to
+   * read back what you just modified.
    * 
    * @example
    * state.increment({ count: 1, score: 5 })
@@ -673,7 +761,11 @@ export class State<
       { [K in NumberKeys<z.infer<TWritableSchema>>]?: number },
       TUpdates
     >
-  ): StateInstance<TSchema, TReadableSchema, TWritableSchema> {
+  ): StateInstance<
+    TSchema,
+    z.ZodType<z.infer<TReadableSchema> & TUpdates>,
+    TWritableSchema
+  > {
     let currentState: StateInstance<TSchema, TReadableSchema, TWritableSchema> = this as any;
     
     for (const [key, delta] of Object.entries(updates)) {
@@ -685,7 +777,26 @@ export class State<
       ) as StateInstance<TSchema, TReadableSchema, TWritableSchema>;
     }
     
-    return currentState;
+    // Extend readable schema with incremented fields
+    let extendedReadableSchema: any;
+    if (this._readableSchema instanceof z.ZodObject) {
+      const readExtension: Record<string, z.ZodTypeAny> = {};
+      for (const key in updates) {
+        if (!(key in this._readableSchema.shape)) {
+          readExtension[key] = z.unknown();
+        }
+      }
+      extendedReadableSchema = Object.keys(readExtension).length > 0
+        ? this._readableSchema.extend(readExtension)
+        : this._readableSchema;
+    } else {
+      extendedReadableSchema = this._readableSchema;
+    }
+    
+    return new State(currentState._schema, currentState._data, {
+      readable: extendedReadableSchema,
+      writable: currentState._writableSchema,
+    }) as any;
   }
 
   /**

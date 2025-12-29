@@ -39,14 +39,11 @@ console.log('Application built successfully:', {
 });
 
 // ✨ Power-user mode: Use defaults from schema
-const counterSchemaWithDefaults = z.object({
-    counter: z.number().default(0)
-});
 
 export const appWithDefaults = new ApplicationBuilder()
     .withGraph(graph)
     .withEntrypoint('counter')
-    .withState(createStateWithDefaults(counterSchemaWithDefaults))  // No data param needed!
+    .withState(createStateWithDefaults(z.object({ counter: z.number().default(0) })))  // No data param needed!
     .build();
 
 console.log('Application with defaults:', {
@@ -54,3 +51,52 @@ console.log('Application with defaults:', {
     initialState: appWithDefaults.initialState.counter
 });
 
+
+
+import { Action} from '../src';
+
+// ============================================================================
+// Reproduce the EXACT pattern from email-assistant
+// ============================================================================
+
+// 1. Define global state schema
+const EmailAssistantState = z.object({
+  a: z.string(),
+  b: z.number(),
+  c: z.boolean(),
+});
+
+// 2. Create actions using .pick()
+const action1 = defineAction({
+  reads: EmailAssistantState.pick({ a: true }),
+  writes: EmailAssistantState.pick({ b: true }),
+  update: ({ state }) => state.update({ b: 42 })
+});
+
+const action2 = defineAction({
+  reads: EmailAssistantState.pick({ b: true }),
+  writes: EmailAssistantState.pick({ c: true }),
+  update: ({ state }) => state.update({ c: true })
+});
+
+// 3. Build graph - this creates the complex UnionOfActionStates type
+const graph = new GraphBuilder()
+  .withActions({ action1, action2 })
+  .build();
+
+// 4. Create state with full schema
+const state = createState(EmailAssistantState, {
+  a: 'test',
+  b: 0,
+  c: false,
+});
+
+// 5. Build application - THIS IS WHERE IT SHOULD WORK BUT DOESN'T
+const app = new ApplicationBuilder()
+  .withGraph(graph)
+  .withEntrypoint('action1')
+  .withState(state)  // <-- Should this compile?
+  .build();
+
+console.log('If this compiles, our validation works!');
+console.log('App:', app);

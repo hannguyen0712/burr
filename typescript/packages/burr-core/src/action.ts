@@ -293,13 +293,13 @@ export class Action<
 
 // Overload 1: When result is specified, run is required
 export function defineAction<
-  TReadsSchema extends z.ZodType<Record<string, any>>,
-  TWritesSchema extends z.ZodType<Record<string, any>>,
-  TInputsSchema extends z.ZodType,
-  TResultSchema extends z.ZodObject<any> | z.ZodVoid
+  TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
+  TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
+  TInputsSchema extends z.ZodType = z.ZodVoid,
+  TResultSchema extends z.ZodObject<any> | z.ZodVoid = z.ZodObject<{}>
 >(config: {
-  reads: TReadsSchema;
-  writes: TWritesSchema;
+  reads?: TReadsSchema;
+  writes?: TWritesSchema;
   inputs?: TInputsSchema;
   result: TResultSchema;
   run: (params: {
@@ -311,12 +311,12 @@ export function defineAction<
 
 // Overload 2: When result is NOT specified, run is optional (defaults to empty object)
 export function defineAction<
-  TReadsSchema extends z.ZodType<Record<string, any>>,
-  TWritesSchema extends z.ZodType<Record<string, any>>,
+  TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
+  TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TInputsSchema extends z.ZodType = z.ZodVoid
 >(config: {
-  reads: TReadsSchema;
-  writes: TWritesSchema;
+  reads?: TReadsSchema;
+  writes?: TWritesSchema;
   inputs?: TInputsSchema;
   result?: never;
   run?: (params: {
@@ -328,13 +328,13 @@ export function defineAction<
 
 // Implementation
 export function defineAction<
-  TReadsSchema extends z.ZodType<Record<string, any>>,
-  TWritesSchema extends z.ZodType<Record<string, any>>,
+  TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
+  TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TInputsSchema extends z.ZodType = z.ZodVoid,
   TResultSchema extends z.ZodObject<any> | z.ZodVoid = z.ZodObject<{}>
 >(config: {
-  reads: TReadsSchema;
-  writes: TWritesSchema;
+  reads?: TReadsSchema;
+  writes?: TWritesSchema;
   inputs?: TInputsSchema;
   result?: TResultSchema;
   run?: (params: {
@@ -343,17 +343,20 @@ export function defineAction<
   }) => Promise<z.infer<TResultSchema>>;
   update: UpdateFunction<TReadsSchema, TWritesSchema, TInputsSchema, TResultSchema>;
 }): Action<TReadsSchema, TWritesSchema, TInputsSchema, TResultSchema> {
+  // Defaults for optional parameters
+  const reads = (config.reads ?? z.object({})) as TReadsSchema;
+  const writes = (config.writes ?? z.object({})) as TWritesSchema;
+  const inputs = (config.inputs ?? z.void()) as TInputsSchema;
+  const result = (config.result ?? z.object({})) as TResultSchema;
+  
   // Default run function returns empty object for simple actions
   const defaultRun = async () => ({}) as z.infer<TResultSchema>;
   
-  // Default result schema is empty object
-  const defaultResult = z.object({}) as TResultSchema;
-  
   return new Action({
-    reads: config.reads,
-    writes: config.writes,
-    inputs: (config.inputs ?? z.void()) as TInputsSchema,
-    result: (config.result ?? defaultResult) as TResultSchema,
+    reads,
+    writes,
+    inputs,
+    result,
     run: (config.run ?? defaultRun) as typeof config.run extends undefined 
       ? typeof defaultRun 
       : NonNullable<typeof config.run>,
