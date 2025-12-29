@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineAction, ApplicationBuilder, GraphBuilder, createState, createStateWithDefaults } from "../src";
+import { action, ApplicationBuilder, GraphBuilder, createState, createStateWithDefaults } from "../src";
 
-const counter = defineAction({
+const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -67,20 +67,20 @@ const EmailAssistantState = z.object({
 });
 
 // 2. Create actions using .pick()
-const action1 = defineAction({
+const action1 = action({
   reads: EmailAssistantState.pick({ a: true }),
   writes: EmailAssistantState.pick({ b: true }),
   update: ({ state }) => state.update({ b: 42 })
 });
 
-const action2 = defineAction({
+const action2 = action({
   reads: EmailAssistantState.pick({ b: true }),
   writes: EmailAssistantState.pick({ c: true }),
-  update: ({ state }) => state.update({ c: true })
+  update: ({ state }) => state.update({ c: true }).update({d: false})
 });
 
 // 3. Build graph - this creates the complex UnionOfActionStates type
-const graph = new GraphBuilder()
+const graph2 = new GraphBuilder()
   .withActions({ action1, action2 })
   .build();
 
@@ -93,7 +93,7 @@ const state = createState(EmailAssistantState, {
 
 // 5. Build application - THIS IS WHERE IT SHOULD WORK BUT DOESN'T
 const app = new ApplicationBuilder()
-  .withGraph(graph)
+  .withGraph(graph2)
   .withEntrypoint('action1')
   .withState(state)  // <-- Should this compile?
   .build();

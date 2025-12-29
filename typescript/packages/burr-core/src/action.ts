@@ -266,7 +266,7 @@ export class Action<
  * @example
  * ```typescript
  * // Full action with run and update
- * const myAction = defineAction({
+ * const myAction = action({
  *   reads: z.object({ count: z.number() }),
  *   writes: z.object({ count: z.number() }),
  *   inputs: z.object({ delta: z.number() }),
@@ -282,7 +282,7 @@ export class Action<
  * });
  *
  * // Simple action without run (for direct state transformations)
- * const incrementAction = defineAction({
+ * const incrementAction = action({
  *   reads: z.object({ count: z.number() }),
  *   writes: z.object({ count: z.number() }),
  *   // No result specified, run defaults to () => ({})
@@ -292,7 +292,7 @@ export class Action<
  */
 
 // Overload 1: When result is specified, run is required
-export function defineAction<
+export function action<
   TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TInputsSchema extends z.ZodType = z.ZodVoid,
@@ -310,7 +310,7 @@ export function defineAction<
 }): Action<TReadsSchema, TWritesSchema, TInputsSchema, TResultSchema>;
 
 // Overload 2: When result is NOT specified, run is optional (defaults to empty object)
-export function defineAction<
+export function action<
   TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TInputsSchema extends z.ZodType = z.ZodVoid
@@ -327,7 +327,7 @@ export function defineAction<
 }): Action<TReadsSchema, TWritesSchema, TInputsSchema, z.ZodObject<{}>>;
 
 // Implementation
-export function defineAction<
+export function action<
   TReadsSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TWritesSchema extends z.ZodType<Record<string, any>> = z.ZodObject<{}>,
   TInputsSchema extends z.ZodType = z.ZodVoid,

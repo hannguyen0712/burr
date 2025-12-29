@@ -4,24 +4,24 @@
  */
 
 import { z } from 'zod';
-import { defineAction } from '../action';
+import { action } from '../action';
 import { Graph, GraphBuilder } from '../graph';
 
 describe('GraphBuilder', () => {
   // Test actions
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ count: z.number(), result: z.string() }),
     update: ({ state }) => state.update({ count: state.count + 1, result: 'done' })
   });
 
-  const action2 = defineAction({
+  const action2 = action({
     reads: z.object({ result: z.string() }),
     writes: z.object({ final: z.boolean() }),
     update: ({ state }) => state.update({ final: true })
   });
 
-  const action3 = defineAction({
+  const action3 = action({
     reads: z.object({ final: z.boolean() }),
     writes: z.object({ message: z.string() }),
     update: ({ state }) => state.update({ message: 'complete' })
@@ -164,13 +164,13 @@ describe('GraphBuilder', () => {
 });
 
 describe('Graph', () => {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ count: z.number() }),
     update: ({ state }) => state.update({ count: state.count + 1 })
   });
 
-  const action2 = defineAction({
+  const action2 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ result: z.string() }),
     update: ({ state }) => state.update({ result: 'done' })

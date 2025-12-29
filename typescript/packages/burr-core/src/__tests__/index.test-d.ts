@@ -10,7 +10,7 @@
  */
 
 import { z } from 'zod';
-import { defineAction, State, createState, GraphBuilder, ApplicationBuilder } from './index';
+import { action, State, createState, GraphBuilder, ApplicationBuilder } from './index';
 import { expectError, expectAssignable } from 'tsd';
 
 // ============================================================================
@@ -105,7 +105,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Must provide run when result is specified
 {
-  expectError(defineAction({
+  expectError(action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     result: z.object({ value: z.number() }),
@@ -115,7 +115,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Run return type must match result schema
 {
-  expectError(defineAction({
+  expectError(action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     result: z.object({ value: z.number() }),
@@ -127,13 +127,13 @@ import { expectError, expectAssignable } from 'tsd';
 // Can omit run when result is not specified
 {
   // ✅ Should compile - run is optional when no result
-  const action = defineAction({
+  const simpleAction = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
   });
   
-  expectAssignable(action);
+  expectAssignable(simpleAction);
 }
 
 // ============================================================================
@@ -143,19 +143,19 @@ import { expectError, expectAssignable } from 'tsd';
 // Action update can return state with extra fields beyond writes
 {
   // ✅ Should compile - covariance allows extra fields
-  const action = defineAction({
+  const covariantAction = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
     // Returns {x, y} but writes only requires {y} - this is OK!
   });
   
-  expectAssignable(action);
+  expectAssignable(covariantAction);
 }
 
 // Action update rejects state missing required writes fields
 {
-  expectError(defineAction({
+  expectError(action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number(), z: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
@@ -200,13 +200,13 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Bottom-up: state type is union of all action states
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.string() }),
     update: ({ state }) => state.update({ y: 'test' })
   });
   
-  const action2 = defineAction({
+  const action2 = action({
     reads: z.object({ y: z.string() }),
     writes: z.object({ z: z.boolean() }),
     update: ({ state }) => state.update({ z: true })
@@ -227,7 +227,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Action names in transitions must exist
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
@@ -244,13 +244,13 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Actions accumulate across multiple withActions calls
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
   });
   
-  const action2 = defineAction({
+  const action2 = action({
     reads: z.object({ y: z.number() }),
     writes: z.object({ z: z.number() }),
     update: ({ state }) => state.update({ z: state.y })
@@ -269,7 +269,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Custom action names work
 {
-  const myAction = defineAction({
+  const myAction = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ count: z.number() }),
     update: ({ state }) => state.update({ count: state.count + 1 })
@@ -293,7 +293,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Type inference from withGraph
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.string() }),
     update: ({ state }) => state.update({ y: 'test' })
@@ -320,7 +320,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Type inference from withState
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ count: z.number() }),
     update: ({ state }) => state.update({ count: state.count + 1 })
@@ -347,7 +347,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Method chaining is immutable
 {
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ x: z.number() }),
     writes: z.object({ y: z.number() }),
     update: ({ state }) => state.update({ y: state.x })
@@ -380,7 +380,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ❌ withState() then withGraph() with incompatible state should fail
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -402,7 +402,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ✅ withState() then withGraph() with exact match should pass
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -424,7 +424,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ✅ withState() then withGraph() with superset should pass
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -450,7 +450,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ❌ withGraph() then withState() with incompatible state should fail
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -473,7 +473,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ✅ withGraph() then withState() with exact match should pass
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -496,7 +496,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // ✅ withGraph() then withState() with superset should pass
 {
-  const counter = defineAction({
+  const counter = action({
     reads: z.object({ counter: z.number() }),
     writes: z.object({ counter: z.number() }),
     update: ({ state }) => state.update({ counter: state.counter + 1 })
@@ -636,7 +636,7 @@ import { expectError, expectAssignable } from 'tsd';
   // This should error with: Type 'string' is not assignable to type 'boolean'
   // NOT: Type 'undefined' is not assignable to type 'boolean'
   expectError(
-    defineAction({
+    action({
       reads: z.object({ a: z.string() }),
       writes: z.object({ b: z.number(), c: z.boolean() }),
       update: ({ state }) => {
@@ -677,7 +677,7 @@ import { expectError, expectAssignable } from 'tsd';
 
 // Type mismatch in action update shows clear error
 {
-  expectError(defineAction({
+  expectError(action({
     reads: z.object({ a: z.string() }),
     writes: z.object({ b: z.boolean() }),
     update: ({ state }) => state.update({ b: 'wrong_type' })

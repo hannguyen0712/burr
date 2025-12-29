@@ -50,16 +50,16 @@ npm install @apache-burr/core zod
 
 ```typescript
 import { z } from 'zod';
-import { defineAction, GraphBuilder, ApplicationBuilder, createState, createStateWithDefaults } from '@apache-burr/core';
+import { action, GraphBuilder, ApplicationBuilder, createState, createStateWithDefaults } from '@apache-burr/core';
 
 // 1. Define actions
-const increment = defineAction({
+const increment = action({
   reads: z.object({ count: z.number() }),
   writes: z.object({ count: z.number() }),
   update: ({ state }) => state.update({ count: state.count + 1 })
 });
 
-const reset = defineAction({
+const reset = action({
   reads: z.object({ count: z.number() }),
   writes: z.object({ count: z.number() }),
   update: () => createState(
@@ -133,14 +133,14 @@ const appWithDefaults = new ApplicationBuilder()
 
 | Feature | Python | TypeScript | Status | Notes |
 |---------|--------|------------|--------|-------|
-| **Two-step actions** | ✅ (`@action`) | ✅ (`defineAction`) | **Complete** | run + update separation |
+| **Two-step actions** | ✅ (`@action`) | ✅ (`action`) | **Complete** | run + update separation |
 | **Reads/writes metadata** | ✅ | ✅ | **Complete** | Via Zod schemas |
 | **Input validation** | ✅ | ✅ | **Complete** | Via Zod schemas |
 | **Result schema** | ✅ | ✅ | **Complete** | Via Zod, object or void |
 | **Streaming actions** | ✅ (`@streaming_action`) | ❌ | Not implemented | Coming soon |
 | **Reducers** | ✅ | ❌ | Not implemented | May not be needed |
 | **Single function** | ✅ | ❌ | Not implemented | Only two-step for now |
-| **Decorators** | ✅ | ❌ | **TS uses factories** | `defineAction` instead of `@action` |
+| **Decorators** | ✅ | ❌ | **TS uses factories** | `action` instead of `@action` |
 | **Type inference** | ❌ | ✅ | **TS-only** | Full compile-time type safety |
 | **Optional run()** | ❌ | ✅ | **TS enhancement** | Defaults to empty result |
 | **Options object params** | ❌ | ✅ | **TS enhancement** | `{ state, inputs }` pattern |
@@ -285,7 +285,7 @@ const appWithDefaults = new ApplicationBuilder()
 | **Schema library** | Pydantic (optional) | Zod (required) | Type erasure requires runtime metadata |
 | **Type safety** | Runtime + mypy | Compile-time + runtime | TypeScript's type system is more powerful |
 | **State validation** | Runtime only | Compile-time | Graph-state compatibility checked at build time |
-| **Decorators** | `@action` | `defineAction()` | Factory pattern is more idiomatic in TS |
+| **Decorators** | `@action` | `action()` | Factory pattern is more idiomatic in TS |
 | **Builder pattern** | Mutable | Immutable | Preserves type information through chaining |
 | **State access** | `state.get()` | `state.field` + `state.get()` | Proxy enables both patterns |
 | **Execution** | Sync + async | Async only | Modern JS is async-first |

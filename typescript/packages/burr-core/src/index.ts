@@ -41,7 +41,7 @@ export {
 } from './state';
 
 // Actions
-export { Action, defineAction } from './action';
+export { Action, action as action } from './action';
 
 // Graph
 export { Graph, GraphBuilder, type Transition } from './graph';

@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { defineAction } from '../action';
+import { action } from '../action';
 import { GraphBuilder } from '../graph';
 import { ApplicationBuilder } from '../application-builder';
 import { Application } from '../application';
@@ -12,13 +12,13 @@ import { createState } from '../state';
 
 describe('ApplicationBuilder', () => {
   // Test fixtures
-  const action1 = defineAction({
+  const action1 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ count: z.number() }),
     update: ({ state }) => state.update({ count: state.count + 1 })
   });
 
-  const action2 = defineAction({
+  const action2 = action({
     reads: z.object({ count: z.number() }),
     writes: z.object({ done: z.boolean() }),
     update: ({ state }) => state.update({ done: true })
@@ -210,14 +210,14 @@ describe('ApplicationBuilder', () => {
 
 describe('Application', () => {
   test('stores graph, entrypoint, and initial state', () => {
-    const action = defineAction({
+    const copyAction = action({
       reads: z.object({ x: z.number() }),
       writes: z.object({ y: z.number() }),
       update: ({ state }) => state.update({ y: state.x })
     });
 
     const graph = new GraphBuilder()
-      .withActions({ action })
+      .withActions({ copyAction })
       .build();
 
     const state = createState(
@@ -228,12 +228,12 @@ describe('Application', () => {
     // Use ApplicationBuilder instead of direct construction (recommended pattern)
     const app = new ApplicationBuilder()
       .withGraph(graph)
-      .withEntrypoint('action')
+      .withEntrypoint('copyAction')
       .withState(state)
       .build();
 
     expect(app.graph).toBe(graph);
-    expect(app.entrypoint).toBe('action');
+    expect(app.entrypoint).toBe('copyAction');
     expect(app.initialState).toBe(state);
   });
 });
