@@ -67,6 +67,9 @@ export interface RunResult<TStateSchema extends z.ZodType<Record<string, any>> =
  * and not part of the Python API.
  */
 export interface ExecutionOptions {
+  /** Runtime inputs to pass to actions */
+  inputs?: Record<string, any>;
+  
   /** Halt before executing these actions (by name or tag like "@tag:myTag") */
   haltBefore?: string[];
   
@@ -110,21 +113,20 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
    * Advances the state machine by one action, executing the next action
    * based on the current state and transitions.
    * 
-   * @param inputs - Optional inputs to pass to the action (only used for first step if provided)
+   * @param options - Execution options (inputs, halt conditions)
    * @returns StepResult containing the action, result, new state, and possible next actions.
    *          Returns null if there is no next action to execute.
    * 
    * @example
    * ```typescript
-   * const step = await app.step();
+   * const step = await app.step({ inputs: { userId: '123' } });
    * if (step) {
-   *   console.log(`Executed: ${step.action.name}`);
    *   console.log(`Result:`, step.result);
    *   console.log(`Next actions:`, step.next);
    * }
    * ```
    */
-  async step(_inputs?: Record<string, any>): Promise<StepResult<TStateSchema> | null> {
+  async step(_options?: ExecutionOptions): Promise<StepResult<TStateSchema> | null> {
     // TODO: Implement execution logic
     throw new Error('Not implemented');
   }
@@ -135,23 +137,19 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
    * Executes steps until a terminal state is reached or a halt condition is met.
    * Does not provide intermediate state access - use iterate() if you need that.
    * 
-   * @param inputs - Optional inputs to pass to the first action
-   * @param options - Execution options (haltBefore, haltAfter)
+   * @param options - Execution options (inputs, haltBefore, haltAfter)
    * @returns RunResult containing the final action, result, and state
    * 
    * @example
    * ```typescript
-   * const result = await app.run(
-   *   { userId: '123' },
-   *   { haltAfter: ['final_action'] }
-   * );
+   * const result = await app.run({
+   *   inputs: { userId: '123' },
+   *   haltAfter: ['final_action']
+   * });
    * console.log(`Final state:`, result.state.data);
    * ```
    */
-  async run(
-    _inputs?: Record<string, any>,
-    _options?: ExecutionOptions
-  ): Promise<RunResult<TStateSchema>> {
+  async run(_options?: ExecutionOptions): Promise<RunResult<TStateSchema>> {
     // TODO: Implement execution logic
     throw new Error('Not implemented');
   }
@@ -162,26 +160,21 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
    * Returns an async iterable that yields StepResult for each executed action.
    * This allows you to observe state changes as they happen.
    * 
-   * @param inputs - Optional inputs to pass to the first action
-   * @param options - Execution options (halt conditions)
+   * @param options - Execution options (inputs, halt conditions)
    * @returns AsyncIterable that yields StepResult for each step
    * 
    * @example
    * ```typescript
-   * for await (const step of app.iterate(
-   *   { userId: '123' },
-   *   { haltAfter: ['final_action'] }
-   * )) {
-   *   console.log(`Executed: ${step.action.name}`);
+   * for await (const step of app.iterate({
+   *   inputs: { userId: '123' },
+   *   haltAfter: ['final_action']
+   * })) {
    *   console.log(`State:`, step.state.data);
    *   console.log(`Next:`, step.next);
    * }
    * ```
    */
-  async *iterate(
-    _inputs?: Record<string, any>,
-    _options?: ExecutionOptions
-  ): AsyncIterable<StepResult<TStateSchema>> {
+  async *iterate(_options?: ExecutionOptions): AsyncIterable<StepResult<TStateSchema>> {
     // TODO: Implement execution logic
     throw new Error('Not implemented');
   }

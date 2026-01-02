@@ -30,13 +30,15 @@ import { FixEmptySchema, MergeRecordValues } from './type-utils';
 /**
  * Merges all state fields from actions into a single type.
  * 
- * Uses the common pattern: map actions to their state requirements,
- * then merge all those requirements into a single type.
+ * Graph type represents the FINAL state - all fields are REQUIRED.
+ * This ensures transition conditions can safely access fields without undefined checks.
+ * 
+ * Initial state can be a subset (some fields optional), but graph defines the complete contract.
  * 
  * Example:
- * - Action1: {} & {a} = {a}
- * - Action2: {a} & {b} = {a,b}
- * - Result: {a} & {a,b} = {a,b}
+ * - Action1 reads/writes: {a: number}
+ * - Action2 reads/writes: {b: string}
+ * - Result: {a: number, b: string}  (both required in final state)
  */
 type MergeActionStates<TActions extends Record<string, Action<any, any, any, any>>> = 
   MergeRecordValues<{

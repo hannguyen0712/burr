@@ -71,6 +71,9 @@ export class Action<
   TInputsSchema extends z.ZodType,
   TResultSchema extends z.ZodObject<any> | z.ZodVoid
 > {
+  // Metadata
+  private readonly _name?: string;
+  
   // Schemas
   private readonly _reads: TReadsSchema;
   private readonly _writes: TWritesSchema;
@@ -95,6 +98,7 @@ export class Action<
   private readonly _inputsKeys: readonly string[];
 
   constructor(config: {
+    name?: string;
     reads: TReadsSchema;
     writes: TWritesSchema;
     inputs: TInputsSchema;
@@ -109,6 +113,7 @@ export class Action<
       inputs: z.infer<TInputsSchema>;
     }) => StateInstance<z.ZodType<z.infer<TWritesSchema>>, any, z.ZodType<z.infer<TWritesSchema>>>;
   }) {
+    this._name = config.name;
     this._reads = config.reads;
     this._writes = config.writes;
     this._inputs = config.inputs;
@@ -145,6 +150,13 @@ export class Action<
       }
       throw error;
     }
+  }
+
+  /**
+   * Name of this action (optional, for debugging/logging)
+   */
+  get name(): string | undefined {
+    return this._name;
   }
 
   /**

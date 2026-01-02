@@ -302,8 +302,11 @@ export type EnsureRecordSchema<T extends z.ZodType> =
  * 
  * Used for compile-time validation in builder methods where one schema must be a superset of another.
  * 
+ * @param AllowOptional - If true, allows TNew to have optional fields where TExisting has required fields
+ * 
  * @example
  * ```typescript
+ * // Strict validation (default)
  * type Valid = ValidateSchemaExtends<
  *   z.object({ a: z.number(), b: z.string() }),
  *   z.object({ a: z.number() })
@@ -313,21 +316,36 @@ export type EnsureRecordSchema<T extends z.ZodType> =
  *   z.object({ a: z.number() }),
  *   z.object({ a: z.number(), b: z.string() })
  * >; // => Error type
+ * 
+ * // Allow optional fields
+ * type ValidOptional = ValidateSchemaExtends<
+ *   z.object({ a: z.number(), b: z.string().optional() }),
+ *   z.object({ a: z.number(), b: z.string() }),
+ *   '❌ Error',
+ *   true
+ * >; // => Valid (b is optional in TNew but required in TExisting)
  * ```
  */
 export type ValidateSchemaExtends<
   TNew extends z.ZodType,
   TExisting extends z.ZodType,
-  ErrorMsg extends string = '❌ Schema constraint violation'
-> = z.infer<TNew> extends z.infer<TExisting>
-  ? TNew
-  : { [K in ErrorMsg]: z.infer<TExisting> };
+  ErrorMsg extends string = '❌ Schema constraint violation',
+  AllowOptional extends boolean = false
+> = AllowOptional extends true
+  ? z.infer<TNew> extends Partial<z.infer<TExisting>>
+    ? TNew
+    : { [K in ErrorMsg]: Partial<z.infer<TExisting>> }
+  : z.infer<TNew> extends z.infer<TExisting>
+    ? TNew
+    : { [K in ErrorMsg]: z.infer<TExisting> };
 
 /**
  * Conditional validation: if `TExisting` is not set, allow `TNew`.
  * Otherwise, validate that `TNew` extends `TExisting`.
  * 
  * Useful for builder patterns where validation should only occur if a constraint has been set.
+ * 
+ * @param AllowOptional - If true, allows TNew to have optional fields where TExisting has required fields
  * 
  * @example
  * ```typescript
@@ -336,14 +354,23 @@ export type ValidateSchemaExtends<
  * 
  * // Constraint is set - validate compatibility
  * type Allowed2 = ConditionalValidate<NewSchema, ExistingSchema>; // => NewSchema if compatible, Error if not
+ * 
+ * // Allow optional fields
+ * type Allowed3 = ConditionalValidate<
+ *   z.object({ a: z.number(), b: z.string().optional() }),
+ *   z.object({ a: z.number(), b: z.string() }),
+ *   '❌ Error',
+ *   true
+ * >; // => Schema (b is optional in TNew but required in TExisting)
  * ```
  */
 export type ConditionalValidate<
   TNew extends z.ZodType,
   TExisting extends z.ZodType,
-  ErrorMsg extends string = '❌ Schema constraint violation'
+  ErrorMsg extends string = '❌ Schema constraint violation',
+  AllowOptional extends boolean = false
 > = [TExisting] extends [z.ZodNever]
   ? TNew
-  : ValidateSchemaExtends<TNew, TExisting, ErrorMsg>;
+  : ValidateSchemaExtends<TNew, TExisting, ErrorMsg, AllowOptional>;
 
 

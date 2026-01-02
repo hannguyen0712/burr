@@ -45,15 +45,18 @@ type SelectFinalSchema<
 /**
  * Validates schema compatibility and returns either SuccessType or error type.
  * Avoids duplication of ConditionalValidate calls in method signatures.
+ * 
+ * @param AllowOptional - If true, allows TNew to have optional fields where TExisting has required fields
  */
 type ValidatedOrError<
   TNew extends z.ZodType,
   TExisting extends z.ZodType,
   SuccessType,
-  ErrorMsg extends string = '❌ Schema constraint violation'
-> = ConditionalValidate<TNew, TExisting, ErrorMsg> extends z.ZodType
+  ErrorMsg extends string = '❌ Schema constraint violation',
+  AllowOptional extends boolean = false
+> = ConditionalValidate<TNew, TExisting, ErrorMsg, AllowOptional> extends z.ZodType
   ? SuccessType
-  : ConditionalValidate<TNew, TExisting, ErrorMsg>;
+  : ConditionalValidate<TNew, TExisting, ErrorMsg, AllowOptional>;
 
 /**
  * Immutable builder for constructing applications.
@@ -187,7 +190,8 @@ export class ApplicationBuilder<
    * Set the initial state for this application.
    * 
    * When TAppStateSchema is not set (never), infers from state schema.
-   * Validates at compile-time that state schema's inferred type extends graph requirements (if graph is set).
+   * Validates at compile-time that state schema has all graph fields (if graph is set).
+   * Allows state to have optional fields where graph requires them (e.g., fields created by actions).
    * 
    * @param initialState - State instance created with createState()
    * @returns New ApplicationBuilder instance with state set
@@ -195,9 +199,10 @@ export class ApplicationBuilder<
    * 
    * @example
    * ```typescript
+   * // State can have optional fields that graph requires
    * const state = createState(
-   *   z.object({ count: z.number() }),
-   *   { count: 0 }
+   *   z.object({ count: z.number(), level: z.string().optional() }),
+   *   { count: 0 }  // level will be created by an action
    * );
    * builder.withState(state)
    * ```
@@ -207,7 +212,8 @@ export class ApplicationBuilder<
       TNewStateSchema,
       TGraphStateSchema,
       StateInstance<TNewStateSchema, TNewStateSchema, TNewStateSchema>,
-      '❌ State schema must extend graph requirements'
+      '❌ State schema must extend graph requirements',
+      true  // Allow optional fields in state
     >
   ): ApplicationBuilder<
     UseIfNotSet<TAppStateSchema, TNewStateSchema>,
@@ -264,6 +270,12 @@ export class ApplicationBuilder<
         'Cannot build application without initial state. Call withState() before build().'
       );
     }
+
+    // TODO: Validate initial state has entrypoint.reads fields
+    // Current limitation: Graph fields are all optional, so we can't enforce at compile-time
+    // that initial state has the fields required by entrypoint.
+    // Runtime validation would catch this, but we'd lose IDE errors.
+    // Future enhancement: Add runtime check or improve type system to track entrypoint schema.
 
     // At runtime, we've validated that state and graph are set
     // Type assertion is safe because withState/withGraph enforce the constraint at the API boundary
