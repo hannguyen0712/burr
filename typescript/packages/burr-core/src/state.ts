@@ -828,6 +828,60 @@ export class State<
   }
 
   /**
+   * Creates a new State containing only the specified keys.
+   * 
+   * Validates that all requested keys exist in the state, throwing an error
+   * if any are missing. This provides strict subsetting for defense in depth.
+   * 
+   * Useful for subsetting state to only what an action needs to read,
+   * or subsetting writes to only declared fields.
+   * 
+   * @param keys - Array of keys to include in the subset
+   * @returns New State instance with only the specified keys
+   * @throws {Error} If any requested keys are missing from the state
+   * 
+   * @example
+   * ```typescript
+   * const state = createState(
+   *   z.object({ count: z.number(), name: z.string(), age: z.number() }),
+   *   { count: 0, name: 'Alice', age: 30 }
+   * );
+   * 
+   * // Get only count and name
+   * const subset = state.subset(['count', 'name']);
+   * // subset.data = { count: 0, name: 'Alice' }
+   * 
+   * // Throws error if keys are missing
+   * state.subset(['count', 'missing']); // throws!
+   * ```
+   */
+  subset(keys: readonly string[]): StateInstance<z.ZodType<Record<string, any>>, z.ZodType<Record<string, any>>, z.ZodType<Record<string, any>>> {
+    // Validate all requested keys are present
+    const missing = keys.filter(key => !(key in this._data));
+    if (missing.length > 0) {
+      throw new Error(
+        `State subset failed: missing required keys [${missing.join(', ')}]`
+      );
+    }
+    
+    // Create subset data by picking only specified keys
+    const subsetData = keys.reduce((acc, key) => {
+      acc[key] = this._data[key];
+      return acc;
+    }, {} as Record<string, any>);
+    
+    // Create a permissive schema for the subset
+    // We use z.record since we don't know the exact shape at compile time
+    const subsetSchema = z.record(z.string(), z.any());
+    
+    return new State(subsetSchema, subsetData) as StateInstance<
+      z.ZodType<Record<string, any>>,
+      z.ZodType<Record<string, any>>,
+      z.ZodType<Record<string, any>>
+    >;
+  }
+
+  /**
    * Deep clones a value using structuredClone.
    * Handles Date, RegExp, Map, Set, circular references, etc.
    */

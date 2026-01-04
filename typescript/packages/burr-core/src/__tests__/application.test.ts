@@ -226,3 +226,225 @@ describe('Application', () => {
   });
 });
 
+describe('Application.runStep (Fork→Launch→Gather→Commit)', () => {
+  test('FORK phase: action receives only declared reads', async () => {
+    // Action that only reads count, not name
+    const counter = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      run: async ({ state }) => {
+        // Should only have access to count, not name
+        expect(state.data).toHaveProperty('count');
+        expect(state.data).not.toHaveProperty('name');
+        return {};
+      },
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ counter })
+      .build();
+
+    const initialState = createState(
+      z.object({ count: z.number(), name: z.string() }),
+      { count: 0, name: 'Alice' }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('counter')
+      .withState(initialState)
+      .withIdentifiers('test-app')
+      .build();
+
+    await app.step();
+  });
+
+  test('COMMIT phase: preserves unwritten fields', async () => {
+    // Action that writes count but not name
+    const partialWriter = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ partialWriter })
+      .build();
+
+    const initialState = createState(
+      z.object({ count: z.number(), name: z.string() }),
+      { count: 0, name: 'Alice' }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('partialWriter')
+      .withState(initialState)
+      .withIdentifiers('test-app')
+      .build();
+
+    const result = await app.step();
+
+    // Verify count was updated
+    expect(result?.state.data.count).toBe(1);
+    // Verify name was preserved (not written by action)
+    expect(result?.state.data.name).toBe('Alice');
+  });
+
+  test('COMMIT phase: merges writes into full state including metadata', async () => {
+    const counter = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ counter })
+      .build();
+
+    const initialState = createState(
+      z.object({ count: z.number() }),
+      { count: 0 }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('counter')
+      .withState(initialState)
+      .withIdentifiers('test-app', 'partition-1')
+      .build();
+
+    const result = await app.step();
+
+    // Verify user state was updated
+    expect(result?.state.data.count).toBe(1);
+    
+    // Verify metadata was preserved
+    expect(result?.state.data.appMetadata).toEqual({
+      appId: 'test-app',
+      partitionKey: 'partition-1',
+      entrypoint: 'counter'
+    });
+    
+    expect(result?.state.data.executionMetadata.sequenceId).toBe(1);
+    expect(result?.state.data.executionMetadata.priorStep).toBe('counter');
+  });
+});
+
+describe('Application.commitWrites', () => {
+  test('merges writes into committed state', () => {
+    const counter = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ counter })
+      .build();
+
+    const committedState = createState(
+      z.object({ count: z.number(), name: z.string() }),
+      { count: 0, name: 'Alice' }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('counter')
+      .withState(committedState)
+      .withIdentifiers('test-app')
+      .build();
+
+    const writes = createState(
+      z.object({ count: z.number() }),
+      { count: 1 }
+    );
+
+    // Access private method using bracket notation
+    const merged = (app as any).commitWrites(app.state, writes, counter);
+
+    // Verify count was updated
+    expect(merged.data.count).toBe(1);
+    // Verify name was preserved
+    expect(merged.data.name).toBe('Alice');
+    // Verify metadata was preserved
+    expect(merged.data.appMetadata).toBeDefined();
+  });
+
+  test('rejects writes to reserved metadata keys', () => {
+    const badAction = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ badAction })
+      .build();
+
+    const committedState = createState(
+      z.object({ count: z.number() }),
+      { count: 0 }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('badAction')
+      .withState(committedState)
+      .withIdentifiers('test-app')
+      .build();
+
+    // Create writes that attempt to modify reserved metadata
+    const badWrites = createState(
+      z.object({ count: z.number(), appMetadata: z.any() }),
+      { count: 1, appMetadata: { appId: 'hacked' } }
+    );
+
+    // Access private method using bracket notation
+    expect(() => {
+      (app as any).commitWrites(app.state, badWrites, badAction);
+    }).toThrow(/reserved metadata keys/);
+    expect(() => {
+      (app as any).commitWrites(app.state, badWrites, badAction);
+    }).toThrow(/appMetadata/);
+  });
+
+  test('rejects writes to any key ending in Metadata', () => {
+    const badAction = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ count: z.number() }),
+      update: ({ state }) => state.update({ count: state.count + 1 })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ badAction })
+      .build();
+
+    const committedState = createState(
+      z.object({ count: z.number() }),
+      { count: 0 }
+    );
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withEntrypoint('badAction')
+      .withState(committedState)
+      .withIdentifiers('test-app')
+      .build();
+
+    // Try to write to custom metadata key
+    const badWrites = createState(
+      z.object({ count: z.number(), customMetadata: z.any() }),
+      { count: 1, customMetadata: { foo: 'bar' } }
+    );
+
+    expect(() => {
+      (app as any).commitWrites(app.state, badWrites, badAction);
+    }).toThrow(/reserved metadata keys/);
+    expect(() => {
+      (app as any).commitWrites(app.state, badWrites, badAction);
+    }).toThrow(/customMetadata/);
+  });
+});
+

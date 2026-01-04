@@ -382,5 +382,146 @@ describe('State', () => {
     expect(state.counter).toBe(99);
     expect(state.name).toBe('custom');
   });
+
+  // ==========================================================================
+  // State Subsetting
+  // ==========================================================================
+
+  describe('subset', () => {
+    test('creates state with only specified keys', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string(), age: z.number() }),
+        { count: 0, name: 'Alice', age: 30 }
+      );
+
+      const subset = state.subset(['count', 'name']);
+
+      expect(subset.data).toEqual({ count: 0, name: 'Alice' });
+      expect(subset.data).not.toHaveProperty('age');
+    });
+
+    test('handles empty key list', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string() }),
+        { count: 0, name: 'Alice' }
+      );
+
+      const subset = state.subset([]);
+
+      expect(subset.data).toEqual({});
+    });
+
+    test('handles single key', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string() }),
+        { count: 0, name: 'Alice' }
+      );
+
+      const subset = state.subset(['count']);
+
+      expect(subset.data).toEqual({ count: 0 });
+    });
+
+    test('throws when subsetting missing keys', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string() }),
+        { count: 0, name: 'Alice' }
+      );
+
+      expect(() => {
+        state.subset(['count', 'nonexistent'] as any);
+      }).toThrow(/missing required keys.*\[nonexistent\]/i);
+    });
+
+    test('subset is independent from original', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string() }),
+        { count: 0, name: 'Alice' }
+      );
+
+      const subset = state.subset(['count']);
+
+      // Modifying subset doesn't affect original (both are immutable anyway)
+      const updated = subset.update({ count: 10 });
+
+      expect(updated.data.count).toBe(10);
+      expect(state.data.count).toBe(0); // Original unchanged
+    });
+
+    test('can chain subset operations', () => {
+      const state = createState(
+        z.object({ a: z.number(), b: z.number(), c: z.number(), d: z.number() }),
+        { a: 1, b: 2, c: 3, d: 4 }
+      );
+
+      const subset1 = state.subset(['a', 'b', 'c']);
+      const subset2 = subset1.subset(['a', 'b']);
+
+      expect(subset2.data).toEqual({ a: 1, b: 2 });
+    });
+
+    test('subset preserves data types', () => {
+      const state = createState(
+        z.object({
+          count: z.number(),
+          name: z.string(),
+          active: z.boolean(),
+          tags: z.array(z.string())
+        }),
+        { count: 42, name: 'Alice', active: true, tags: ['a', 'b'] }
+      );
+
+      const subset = state.subset(['count', 'tags']);
+
+      expect(subset.data.count).toBe(42);
+      expect(subset.data.tags).toEqual(['a', 'b']);
+      expect(Array.isArray(subset.data.tags)).toBe(true);
+    });
+
+    test('throws with all missing keys listed', () => {
+      const state = createState(
+        z.object({ count: z.number() }),
+        { count: 0 }
+      );
+
+      expect(() => {
+        state.subset(['name', 'age', 'level'] as any);
+      }).toThrow(/missing required keys.*\[name, age, level\]/i);
+    });
+
+    test('throws when some keys present and some missing', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string() }),
+        { count: 0, name: 'Alice' }
+      );
+
+      expect(() => {
+        state.subset(['count', 'age', 'level'] as any);
+      }).toThrow(/missing required keys.*\[age, level\]/i);
+    });
+
+    test('does not throw when all keys present', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string(), age: z.number() }),
+        { count: 0, name: 'Alice', age: 30 }
+      );
+
+      expect(() => {
+        state.subset(['count', 'name']);
+      }).not.toThrow();
+    });
+
+    test('subset result only contains requested keys', () => {
+      const state = createState(
+        z.object({ count: z.number(), name: z.string(), age: z.number() }),
+        { count: 0, name: 'Alice', age: 30 }
+      );
+
+      const subset = state.subset(['count', 'name']);
+
+      expect(Object.keys(subset.data)).toEqual(['count', 'name']);
+      expect(subset.data).not.toHaveProperty('age');
+    });
+  });
 });
 

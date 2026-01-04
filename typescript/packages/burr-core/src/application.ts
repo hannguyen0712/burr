@@ -20,7 +20,7 @@
 // Application runtime and execution engine
 
 import { Graph } from './graph';
-import { StateInstance } from './state';
+import { StateInstance, isReservedMetadataKey } from './state';
 import { Action } from './action';
 import { z } from 'zod';
 
@@ -298,26 +298,120 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
   }
   
   /**
+   * Core execution unit: Fork → Launch → Gather → Commit
+   * 
+   * Executes a single action through four distinct phases:
+   * 1. FORK: Subset state to action's declared reads (copy-on-write view)
+   * 2. LAUNCH: Execute action's run phase with forked state
+   * 3. GATHER: Execute action's update phase to collect writes
+   * 4. COMMIT: Merge writes back into committed state
+   * 
+   * @internal
+   */
+  private async runStep(
+    action: Action<any, any, any, any>,
+    inputs: Record<string, any>
+  ): Promise<{
+    action: Action<any, any, any, any>;
+    result: Record<string, any> | void;
+    newState: ApplicationStateInstance<TStateSchema>;
+  }> {
+    // Snapshot committed state
+    const committedState = this._state;
+    
+    // ====================================
+    // PHASE 1: FORK
+    // ====================================
+    // Subset state to reads (copy-on-write view)
+    const forkedState = committedState.subset(action.reads) as StateInstance<any, any, any>;
+    
+    // ====================================
+    // PHASE 2: LAUNCH
+    // ====================================
+    // Execute action with subsetted state
+    const result = await action.run({ 
+      state: forkedState, 
+      inputs 
+    });
+    
+    // ====================================
+    // PHASE 3: GATHER
+    // ====================================
+    // Collect writes, validate against schema
+    const writesState = action.update({ 
+      result, 
+      state: forkedState, 
+      inputs 
+    });
+    
+    // Subset writes to only declared write fields
+    const writeKeys = action.writes;
+    const writes = writesState.subset(writeKeys);
+    
+    // ====================================
+    // PHASE 4: COMMIT
+    // ====================================
+    // Merge writes back to committed state
+    const newState = this.commitWrites(committedState, writes, action);
+    
+    return { action, result, newState };
+  }
+  
+  /**
+   * Commit writes to state (PHASE 4 of execution).
+   * 
+   * Merges action writes back into the committed state.
+   * Validates that writes don't include reserved metadata keys.
+   * 
+   * Uses simple overwrite strategy: writes take precedence over existing values.
+   * Future: Support parallel merge strategies with conflict resolution.
+   * 
+   * @internal
+   */
+  private commitWrites(
+    committedState: ApplicationStateInstance<TStateSchema>,
+    writes: StateInstance<any, any, any>,
+    action: Action<any, any, any, any>
+  ): ApplicationStateInstance<TStateSchema> {
+    // Validate no reserved metadata keys in writes
+    const writeKeys = Object.keys(writes.data);
+    const reservedWrites = writeKeys.filter(isReservedMetadataKey);
+    if (reservedWrites.length > 0) {
+      throw new Error(
+        `Action '${action.name}' attempted to write to reserved metadata keys: ${reservedWrites.join(', ')}. ` +
+        `Keys ending in 'Metadata' are reserved for framework use.`
+      );
+    }
+    
+    // Simple overwrite merge: writes take precedence
+    const mergedData = {
+      ...committedState.data,
+      ...writes.data
+    };
+    
+    return committedState.update(mergedData as any) as ApplicationStateInstance<TStateSchema>;
+  }
+  
+  /**
    * Executes a single step of the application.
    * 
    * Advances the state machine by one action, executing the next action
    * based on the current state and transitions.
    * 
    * @param options - Execution options (inputs, halt conditions)
-   * @returns StepResult containing the action, result, new state, and possible next actions.
+   * @returns StepResult containing the action, result, and new state.
    *          Returns null if there is no next action to execute.
    * 
    * @example
    * ```typescript
    * const step = await app.step({ inputs: { userId: '123' } });
    * if (step) {
+   *   console.log(`Action:`, step.action.name);
    *   console.log(`Result:`, step.result);
-   *   console.log(`Next actions:`, step.next);
    * }
    * ```
    */
   async step(options?: ExecutionOptions): Promise<StepResult<TStateSchema> | null> {
-    // Get inputs - default to empty object for convenience (void validation accepts {})
     const inputs = options?.inputs || {};
     
     // Increment sequence ID before execution
@@ -330,29 +424,19 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
     }
     
     try {
-      // Execute action (run + update phases)
-      // First, run the action to get the result
-      const result = await nextAction.run({ state: this._state, inputs });
+      // Execute the four-phase cycle: fork → launch → gather → commit
+      const { action, result, newState } = await this.runStep(nextAction, inputs);
       
-      // Then update state with the result
-      const writesState = nextAction.update({ result, state: this._state, inputs });
-      
-      // Merge writes back into the full application state (preserving unwritten fields)
-      const mergedData = { ...this._state.data, ...writesState.data };
-      this._state = this._state.update(mergedData as any) as ApplicationStateInstance<TStateSchema>;
-      
-      // Update priorStep to track execution history
-      const actionName = nextAction.name || 'unknown';
-      this.setPriorStep(actionName);
+      // Update application state
+      this._state = newState;
+      this.setPriorStep(action.name || 'unknown');
       
       return {
-        action: nextAction,
+        action,
         result,
         state: this._state
       };
     } catch (error) {
-      // TODO: Format error message like Python (include action name, state, inputs)
-      // For now, re-throw with basic context
       if (error instanceof Error) {
         const actionName = nextAction.name || 'unknown';
         throw new Error(`Error executing action '${actionName}': ${error.message}`, { cause: error });

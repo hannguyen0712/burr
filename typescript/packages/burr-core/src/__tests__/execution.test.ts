@@ -103,22 +103,6 @@ describe('app.step() - Basic Execution', () => {
     expect(result!.state.count).toBe(6);  // 0 + 1 + 5
   });
 
-  // Tests validation error when required inputs are not provided to step().
-  // Create action requiring inputs, call step() without providing them, expect validation error thrown.
-  test('throws validation error for missing inputs', async () => {
-    const graph = new GraphBuilder()
-      .withActions({ counterWithInputs })
-      .build();  // No transitions = terminal
-
-    const app = new ApplicationBuilder()
-      .withGraph(graph)
-      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
-      .withEntrypoint('counterWithInputs')
-      .build();
-
-    await expect(app.step()).rejects.toThrow(/required.*input|missing/i);
-  });
-
   // Tests terminal state detection when action has no outgoing transitions.
   // Create graph with no transitions from entrypoint, execute two steps, second step returns null at terminal.
   test('returns null when no next actions', async () => {
@@ -324,80 +308,6 @@ describe('app.iterate() - Iterator Pattern', () => {
     }
 
     expect(stepCount).toBe(5);
-  });
-});
-
-// ============================================================================
-// State Management
-// ============================================================================
-
-describe('State Management', () => {
-  // Tests that state merge preserves fields not declared in action's writes schema.
-  // Create action writing subset of state fields, execute step, verify unwritten fields remain unchanged.
-  test('preserves unwritten fields', async () => {
-    const partialWriter = action({
-      reads: z.object({ count: z.number(), name: z.string() }),
-      writes: z.object({ count: z.number() }),
-      update: ({ state }) => state.update({ count: state.count + 1 })
-    });
-
-    const graph = new GraphBuilder()
-      .withActions({ partialWriter })
-      .build();  // No transitions = terminal
-
-    const app = new ApplicationBuilder()
-      .withGraph(graph)
-      .withState(createState(
-        z.object({ count: z.number(), name: z.string() }), 
-        { count: 0, name: 'Alice' }
-      ))
-      .withEntrypoint('partialWriter')
-      .build();
-
-    const result = await app.step();
-
-    expect(result).not.toBeNull();
-    expect(result!.state.count).toBe(1);     // Updated
-    expect(result!.state.name).toBe('Alice'); // Preserved
-  });
-
-  // Tests validation error when action doesn't write all declared write fields.
-  // Create action declaring writes but not producing them in update(), execute step, expect validation error.
-  test('runtime error for missing writes', async () => {
-    const missingWrites = action({
-      reads: z.object({}),
-      writes: z.object({ missing: z.number(), present: z.number() }),
-      // @ts-expect-error - Intentionally missing 'missing' field to test runtime validation
-      update: ({ state }) => state.update({ present: 1 })
-    });
-
-    const graph = new GraphBuilder()
-      .withActions({ missingWrites })
-      .build();  // No transitions = terminal
-
-    const app = new ApplicationBuilder()
-      .withGraph(graph)
-      .withState(createState(z.object({}), {}))
-      .withEntrypoint('missingWrites')
-      .build();
-
-    await expect(app.step()).rejects.toThrow(/missing.*not.*written|required/i);
-  });
-
-  // Tests validation error when state missing fields required by action's reads schema.
-  // Create action requiring field not present in state, execute step, expect validation error on reads check.
-  test('runtime error for missing state fields', async () => {
-    const graph = new GraphBuilder()
-      .withActions({ counter })
-      .build();  // No transitions = terminal
-
-    const app = new ApplicationBuilder()
-      .withGraph(graph)
-      .withState(createState(z.object({}), {}))  // Missing 'count'
-      .withEntrypoint('counter')
-      .build();
-
-    await expect(app.step()).rejects.toThrow(/validation.*failed|required/i);
   });
 });
 

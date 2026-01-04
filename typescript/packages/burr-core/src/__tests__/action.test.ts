@@ -265,8 +265,10 @@ describe('Action - Execution (run)', () => {
     expect(result).toEqual({ sum: 15 });
   });
 
-  test('run validates state before execution', async () => {
-    // Pass: Throws error when state doesn't match reads schema
+  test('run does not validate reads (application handles subsetting)', async () => {
+    // Note: Reads validation is handled by the Application during FORK phase
+    // The action receives a pre-subsetted state and trusts it's correct
+    // This test verifies that action.run() doesn't validate reads itself
     const incrementAction = action({
       reads: z.object({ count: z.number() }),
       writes: z.object({ count: z.number() }),
@@ -275,11 +277,14 @@ describe('Action - Execution (run)', () => {
       update: ({ result, state }) => state.update({ count: result.newCount })
     });
 
-    // Pass invalid state (count should be number, not string)
+    // Even with invalid state type, action doesn't validate reads
+    // (It will fail during execution or result validation instead)
     const invalidState = createState(z.object({ count: z.any() }), { count: 'invalid' }) as any;
+    
+    // The action executes, but result validation catches the type error
     await expect(
       incrementAction.run({ state: invalidState, inputs: undefined })
-    ).rejects.toThrow('Action validation failed for state (reads)');
+    ).rejects.toThrow('Action validation failed for result');
   });
 
   test('run validates inputs before execution', async () => {

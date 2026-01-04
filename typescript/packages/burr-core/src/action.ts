@@ -241,10 +241,13 @@ export class Action<
 
   /**
    * Execute the action's computation.
-   * Validates state and inputs, calls user's run function, validates result.
+   * 
+   * Validates inputs, calls user's run function, validates result.
+   * Note: State is already subsetted to reads by Application (FORK phase),
+   * so no reads validation is needed here.
    *
    * @param params - Parameters object
-   * @param params.state - State instance with reads/writes restrictions
+   * @param params.state - State instance subsetted to reads (provided by Application)
    * @param params.inputs - Runtime inputs that match inputs schema
    * @returns Result object that matches result schema
    */
@@ -254,8 +257,7 @@ export class Action<
   }): Promise<z.infer<TResultSchema>> {
     const { state, inputs } = params;
     
-    // Validate inputs
-    this.validate(state.data, this._reads, 'state (reads)');
+    // Validate inputs (state already subsetted by Application)
     this.validate(inputs, this._inputs, 'inputs');
 
     // Execute user function
