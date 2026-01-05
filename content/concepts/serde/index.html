@@ -44,7 +44,27 @@
       }
     }
   }
-</style></head>
+</style>
+
+<!-- Matomo -->
+<script>
+  var _paq = window._paq = window._paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  _paq.push(["setDoNotTrack", true]);
+  _paq.push(["disableCookies"]);
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="https://analytics.apache.org/";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '86']);
+    var d=document, g=d.createElement('script'),
+s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code -->
+</head>
   <body>
     
     <script>
@@ -456,6 +476,12 @@ type based serialization/deserialization mechanism.</p>
 </div></blockquote>
 </section>
 </section>
+<section id="limitations-of-state-serialization">
+<h2>Limitations of State Serialization<a class="headerlink" href="#limitations-of-state-serialization" title="Link to this heading">¶</a></h2>
+<p>Currently, it is only possible to override the serialization and deserialization behavior of individual fields within a state.
+Overriding the serialization of the entire state object as a whole is not supported at this time.
+If you need custom handling, you must apply it at the field level.</p>
+</section>
 </section>
 
         </article>
@@ -533,6 +559,7 @@ type based serialization/deserialization mechanism.</p>
 <li><a class="reference internal" href="#field-level-serialization-deserialization">Field level Serialization/Deserialization</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#limitations-of-state-serialization">Limitations of State Serialization</a></li>
 </ul>
 </li>
 </ul>
