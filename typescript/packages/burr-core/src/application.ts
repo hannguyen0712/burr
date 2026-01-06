@@ -209,14 +209,19 @@ export class Application<TStateSchema extends z.ZodType<Record<string, any>> = z
     this.appId = appId;
     this.partitionKey = partitionKey;
     
+    // Check if state already has metadata (resumption case)
+    const existingData = initialState.data as any;
+    const hasExistingMetadata = existingData.executionMetadata !== undefined;
+    
     // Extend user's state with framework metadata
+    // Preserve existing metadata if present (for resumption), otherwise initialize
     this._state = initialState.update({
-      appMetadata: {
+      appMetadata: hasExistingMetadata ? existingData.appMetadata : {
         appId,
         partitionKey,
         entrypoint,
       },
-      executionMetadata: {
+      executionMetadata: hasExistingMetadata ? existingData.executionMetadata : {
         sequenceId: initialSequenceId ?? 0,
         // priorStep starts undefined
       },

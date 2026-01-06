@@ -69,7 +69,7 @@ This implementation aims to match the Python version's core functionality with T
 | `state.append(key=val)` | ✅ | ✅ | Python: multiple keys; TS: single key |
 | `state.extend(key=vals)` | ✅ | ✅ | Python: multiple keys; TS: single key |
 | `state.increment(key=delta)` | ✅ | ✅ | Python: multiple keys; TS: single key |
-| `state.subset(*keys)` | ✅ | ✅ | |
+| `state.subset(*keys)` | ✅ | ✅ | TS version is strict (throws on missing keys) |
 | `state.merge(other)` | ✅ | ✅ | |
 | `state.wipe(delete/keep)` | ✅ | ❌ | Delete operations not yet implemented |
 | `state.serialize()` | ✅ | ✅ | Basic JSON serialization |
@@ -110,10 +110,12 @@ This implementation aims to match the Python version's core functionality with T
 | Entrypoint specification | ✅ | ✅ | |
 | Halt conditions (before/after) | ✅ | ✅ | `haltBefore` / `haltAfter` |
 | Application state access | ✅ | ✅ | `app.state` property |
-| Initial state access | ❌ | ✅ | TS has `app.initialState` property |
+| Initial state access | ❌ | ❌ | Removed for Python parity |
 | Application ID | ✅ | ✅ | `uid` in Python, `appId` in TS |
 | Partition key | ✅ | ✅ | |
-| Sequence ID access | ✅ | ❌ | Python has `.sequence_id` property |
+| Sequence ID access | ✅ | ✅ | Stored in `state.executionMetadata.sequenceId` |
+| Fork→Launch→Gather→Commit pattern | ❌ | ✅ | TS uses 4-phase execution with defense-in-depth validation |
+| Framework metadata in state | ✅ | ✅ | TS: `appMetadata`/`executionMetadata`, Python: `__*` fields |
 | Application context | ✅ | ❌ | Not yet implemented |
 | `has_next_action()` | ✅ | ❌ | Not yet implemented |
 | `get_next_action()` | ✅ | ❌ | Internal in TS |
@@ -210,25 +212,36 @@ This implementation aims to match the Python version's core functionality with T
 
 ### Implementation Priority
 
-**Phase 1 (Completed):**
+**Phase 1 (✅ COMPLETED):**
 - ✅ State API core operations
-- ✅ State immutability & operations
+- ✅ State immutability & operations (update, append, extend, increment, subset)
+- ✅ Strict subset validation (throws on missing keys)
 - ✅ Basic serialization
 - ✅ Actions with Zod validation
 - ✅ Application & ApplicationBuilder
 - ✅ Graph & transitions
 - ✅ Execution engine (step/run/iterate)
+- ✅ Fork→Launch→Gather→Commit execution pattern
+- ✅ Defense-in-depth validation
+- ✅ Framework metadata (appMetadata/executionMetadata)
+- ✅ Halt conditions (haltBefore/haltAfter)
+- ✅ Error propagation with context
 
-**Phase 2 (Current):**
-- Graph validation & cycle detection
+**Phase 2 (Current - Core Extensions):**
 - Streaming actions
-- Action tags
-- Additional helper methods
+- Lifecycle hooks (pre/post action)
+- Application context (dependency injection)
+- Graph validation & cycle detection
 
-**Phase 3 (Future):**
-- Lifecycle hooks
-- Persistence
+**Phase 3 (Future - Developer Experience):**
+- Action tags
+- Helper methods (reset_to_entrypoint, has_next_action, etc.)
+- Graph visualization
+- Better error messages
+
+**Phase 4 (Long Term - Production Features):**
+- Persistence adapters
 - Tracking & observability
-- Integrations
-- Visualization
+- Parent/spawning pointers
+- Integrations (LangChain, etc.)
 

@@ -482,3 +482,389 @@ describe('Integration Scenarios', () => {
     expect(result!.state.output).toBe('HELLO');                    // update() applied it
   });
 });
+
+// ============================================================================
+// Critical Production Tests
+// ============================================================================
+
+describe('Critical Production Tests', () => {
+  // Tests that sequence ID correctly increments with each step execution.
+  // Verifies internal execution tracking is maintained across multiple steps for replay/debugging.
+  test('sequence ID increments correctly across multiple steps', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter })
+      .withTransitions(['counter', 'counter'])
+      .build();
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('test-app')
+      .build();
+
+    // Initial sequence ID should be 0
+    expect(app.state.data.executionMetadata.sequenceId).toBe(0);
+
+    // Verify sequence ID increments with each step
+    for (let i = 1; i <= 3; i++) {
+      await app.step();
+      expect(app.state.data.executionMetadata.sequenceId).toBe(i);
+    }
+  });
+
+  // Tests that framework metadata (appMetadata and executionMetadata) persists correctly during run().
+  // Verifies metadata doesn't get lost during state merges throughout entire execution lifecycle.
+  test('framework metadata persists correctly through run()', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter, result })
+      .withTransitions(
+        ['counter', 'counter', (state) => state.count < 5],
+        ['counter', 'result']
+      )
+      .build();
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('my-app', 'partition-123')
+      .build();
+
+    const final = await app.run();
+
+    // App metadata should be unchanged
+    expect(final.state.data.appMetadata).toEqual({
+      appId: 'my-app',
+      partitionKey: 'partition-123',
+      entrypoint: 'counter'
+    });
+
+    // Execution metadata should be updated
+    expect(final.state.data.executionMetadata.sequenceId).toBeGreaterThan(0);
+    expect(final.state.data.executionMetadata.priorStep).toBe('result');
+  });
+
+  // Tests that actions cannot declare writes to reserved framework metadata keys.
+  // Verifies defense-in-depth validation prevents metadata corruption.
+  test('actions cannot write to framework metadata', async () => {
+    const maliciousAction = action({
+      reads: z.object({ count: z.number() }),
+      // Malicious action declares it will write to metadata
+      writes: z.object({ count: z.number(), appMetadata: z.any() }),
+      update: ({ state }) => {
+        // Try to write to both count and metadata
+        return state.update({ 
+          count: state.count + 1,
+          appMetadata: { appId: 'hacked' }
+        } as any);
+      }
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ maliciousAction })
+      .build();
+
+    const app = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('maliciousAction')
+      .withIdentifiers('test-app')
+      .build();
+
+    // Should throw during COMMIT phase when validating write keys
+    await expect(app.step()).rejects.toThrow(/reserved metadata keys/i);
+  });
+
+  // Tests complex graph with multiple conditional branches (3+ outgoing transitions).
+  // Verifies transition evaluation order and correct path selection in realistic decision trees.
+  test('complex branching with multiple transitions works correctly', async () => {
+    const low = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ level: z.string() }),
+      update: ({ state }) => state.update({ level: 'low' })
+    });
+    
+    const medium = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ level: z.string() }),
+      update: ({ state }) => state.update({ level: 'medium' })
+    });
+    
+    const high = action({
+      reads: z.object({ count: z.number() }),
+      writes: z.object({ level: z.string() }),
+      update: ({ state }) => state.update({ level: 'high' })
+    });
+
+    const graph = new GraphBuilder()
+      .withActions({ counter, low, medium, high })
+      .withTransitions(
+        ['counter', 'low', (state) => state.count < 3],     // Priority 1
+        ['counter', 'medium', (state) => state.count < 7],   // Priority 2
+        ['counter', 'high', (state) => state.count >= 7]     // Priority 3
+      )
+      .build();
+
+    // Test low path
+    const app1 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(
+        z.object({ count: z.number(), level: z.string().optional() }), 
+        { count: 1 }
+      ))
+      .withEntrypoint('counter')
+      .build();
+    
+    await app1.step(); // counter: 1 → 2
+    const step2 = await app1.step(); // should go to 'low'
+    expect(step2?.action.name).toBe('low');
+
+    // Test medium path
+    const app2 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(
+        z.object({ count: z.number(), level: z.string().optional() }), 
+        { count: 5 }
+      ))
+      .withEntrypoint('counter')
+      .build();
+    
+    await app2.step(); // counter: 5 → 6
+    const step2b = await app2.step(); // should go to 'medium'
+    expect(step2b?.action.name).toBe('medium');
+
+    // Test high path
+    const app3 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(
+        z.object({ count: z.number(), level: z.string().optional() }), 
+        { count: 7 }
+      ))
+      .withEntrypoint('counter')
+      .build();
+    
+    await app3.step(); // counter: 7 → 8
+    const step2c = await app3.step(); // should go to 'high'
+    expect(step2c?.action.name).toBe('high');
+  });
+
+  // Tests that run() produces identical state to manually calling step() in sequence.
+  // Verifies run() is truly just a loop over step() with no hidden behavior or side effects.
+  test('run() state matches manual step() sequence', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter, result })
+      .withTransitions(
+        ['counter', 'counter', (state) => state.count < 3],
+        ['counter', 'result']
+      )
+      .build();
+
+    // App 1: Use run()
+    const app1 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('app1')
+      .build();
+
+    const runResult = await app1.run();
+
+    // App 2: Manual step() calls
+    const app2 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('app2')
+      .build();
+
+    let lastStep = await app2.step(); // counter: 0 → 1
+    lastStep = await app2.step();     // counter: 1 → 2
+    lastStep = await app2.step();     // counter: 2 → 3
+    lastStep = await app2.step();     // result
+    const finalStep = await app2.step(); // terminal
+
+    // States should be identical (except appId)
+    expect(runResult.state.data.count).toBe(lastStep!.state.data.count);
+    expect(runResult.state.data.executionMetadata.priorStep).toBe(lastStep!.state.data.executionMetadata.priorStep);
+    expect(runResult.result).toEqual(lastStep!.result);
+    expect(finalStep).toBeNull(); // Both should hit terminal
+  });
+});
+
+// ============================================================================
+// Resumption Tests
+// ============================================================================
+
+describe('Resumption Tests', () => {
+  // Tests that new application instance can resume from existing state mid-execution.
+  // Verifies state handoff between application instances with correct metadata tracking.
+  test('CRITICAL: application can resume from existing state', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter, result })
+      .withTransitions(
+        ['counter', 'counter', (state) => state.count < 10],
+        ['counter', 'result']
+      )
+      .build();
+
+    // ============================================
+    // PHASE 1: Initial execution (run 3 steps)
+    // ============================================
+    const app1 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('workflow-123', 'user-456')
+      .build();
+
+    await app1.step(); // 0 → 1
+    await app1.step(); // 1 → 2
+    await app1.step(); // 2 → 3
+
+    // Capture state after 3 steps
+    const intermediateState = app1.state;
+    
+    // CRITICAL: Verify metadata is present
+    expect(intermediateState.data.count).toBe(3);
+    expect(intermediateState.data.executionMetadata.sequenceId).toBe(3);
+    expect(intermediateState.data.executionMetadata.priorStep).toBe('counter');
+    expect(intermediateState.data.appMetadata.appId).toBe('workflow-123');
+
+    // ============================================
+    // PHASE 2: Create NEW application with existing state
+    // ============================================
+    const app2 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(intermediateState as any)
+      .withEntrypoint('counter') // Should be ignored - priorStep determines next
+      .withIdentifiers('workflow-123', 'user-456')
+      .build();
+
+    // CRITICAL: Metadata should be preserved
+    expect(app2.state.data.count).toBe(3);
+    expect(app2.state.data.executionMetadata.sequenceId).toBe(3);
+    expect(app2.state.data.executionMetadata.priorStep).toBe('counter');
+    expect(app2.state.data.appMetadata.appId).toBe('workflow-123');
+
+    // ============================================
+    // PHASE 3: Resume execution
+    // ============================================
+    await app2.step(); // 3 → 4 (sequence ID should be 4)
+    expect(app2.state.data.count).toBe(4);
+    expect(app2.state.data.executionMetadata.sequenceId).toBe(4);
+
+    await app2.step(); // 4 → 5
+    await app2.step(); // 5 → 6
+    
+    // ============================================
+    // PHASE 4: Run to completion
+    // ============================================
+    const final = await app2.run();
+    
+    expect(final.state.data.count).toBe(10);
+    expect(final.state.data.executionMetadata.sequenceId).toBeGreaterThan(3);
+    expect(final.state.data.executionMetadata.priorStep).toBe('result');
+    expect(final.result).toHaveProperty('value', 10);
+  });
+
+  // Tests that resuming from a halted execution continues correctly.
+  // Verifies human-in-loop pattern: halt for approval, create new app, resume.
+  test('resume from halt continues correctly', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter, result })
+      .withTransitions(
+        ['counter', 'counter', (state) => state.count < 10],
+        ['counter', 'result']
+      )
+      .build();
+
+    // ============================================
+    // PHASE 1: Run until haltAfter
+    // ============================================
+    const app1 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('workflow-123')
+      .build();
+
+    // Run until we've executed counter once
+    const halted = await app1.run({ 
+      haltAfter: ['counter'],
+    });
+
+    expect(halted.state.data.count).toBe(1);
+    expect(halted.action?.name).toBe('counter');
+
+    // ============================================
+    // PHASE 2: Create new app with halted state
+    // ============================================
+    const app2 = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(app1.state as any)
+      .withEntrypoint('counter')
+      .withIdentifiers('workflow-123')
+      .build();
+
+    // ============================================
+    // PHASE 3: Continue execution
+    // ============================================
+    // Should continue from count=1, not re-execute the halted action
+    await app2.step(); // 1 → 2
+    expect(app2.state.data.count).toBe(2);
+
+    // Run to completion
+    const final = await app2.run();
+    expect(final.state.data.count).toBe(10);
+  });
+
+  // Tests that multiple app restarts maintain state consistency.
+  // Verifies long-running workflows can be handed off between app instances many times.
+  test('multiple app restarts maintain state consistency', async () => {
+    const graph = new GraphBuilder()
+      .withActions({ counter })
+      .withTransitions(['counter', 'counter'])
+      .build();
+
+    // Initialize with metadata
+    const initialApp = new ApplicationBuilder()
+      .withGraph(graph)
+      .withState(createState(z.object({ count: z.number() }), { count: 0 }))
+      .withEntrypoint('counter')
+      .withIdentifiers('app-123', 'partition-1')
+      .build();
+    
+    let currentState = initialApp.state;
+
+    // ============================================
+    // Simulate 5 app restart cycles
+    // ============================================
+    for (let cycle = 0; cycle < 5; cycle++) {
+      // Create new app instance with existing state
+      const app = new ApplicationBuilder()
+        .withGraph(graph)
+        .withState(currentState as any)
+        .withEntrypoint('counter')
+        .withIdentifiers('app-123', 'partition-1')
+        .build();
+
+      // Run 2 steps
+      await app.step();
+      await app.step();
+
+      // Save state for next cycle
+      currentState = app.state;
+
+      // Verify sequence ID is correct
+      const expectedSequenceId = (cycle + 1) * 2;
+      expect(currentState.data.executionMetadata.sequenceId).toBe(expectedSequenceId);
+      expect(currentState.data.count).toBe(expectedSequenceId);
+    }
+    
+    // After 5 cycles × 2 steps = 10 steps total
+    expect(currentState.data.count).toBe(10);
+    expect(currentState.data.executionMetadata.sequenceId).toBe(10);
+    expect(currentState.data.appMetadata.appId).toBe('app-123');
+  });
+});
