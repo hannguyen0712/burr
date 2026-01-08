@@ -302,9 +302,9 @@ def _create_git_archive(version: str, rc_num: str, output_dir: str = "dist") -> 
 
     os.makedirs(output_dir, exist_ok=True)
 
-    archive_name = f"apache-burr-{version}-incubating-src.tar.gz"
+    archive_name = f"apache-burr-{version}-incubating.tar.gz"
     archive_path = os.path.join(output_dir, archive_name)
-    prefix = f"apache-burr-{version}-incubating-src/"
+    prefix = f"apache-burr-{version}-incubating/"
 
     try:
         subprocess.run(
@@ -383,7 +383,7 @@ def _build_sdist_from_git(version: str, output_dir: str = "dist") -> str:
 
     original_sdist = sdist_files[0]
     apache_sdist = os.path.join(
-        output_dir, f"apache-burr-{version.lower()}-incubating-src-sdist.tar.gz"
+        output_dir, f"apache-burr-{version.lower()}-incubating-sdist.tar.gz"
     )
 
     if os.path.exists(apache_sdist):
@@ -579,7 +579,9 @@ def _collect_all_artifacts(version: str, output_dir: str = "dist") -> list[str]:
 
     artifacts = []
     for filename in os.listdir(output_dir):
-        if f"{version}-incubating" in filename:
+        # Match both incubating artifacts and wheel (which doesn't have -incubating suffix)
+        version_match = f"{version}-incubating" in filename or f"{version}" in filename
+        if version_match:
             if any(filename.endswith(ext) for ext in [".tar.gz", ".whl", ".asc", ".sha512"]):
                 artifacts.append(os.path.join(output_dir, filename))
 
