@@ -22,11 +22,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex/"><link rel="search" title="Search" href="../../search/"><link rel="next" title="Installation" href="../install/"><link rel="prev" title="Get started" href="../">
-        <link rel="canonical" href="https://burr.staged.apache.org/getting_started/why-burr/">
+<link rel="index" title="Index" href="../../genindex/"><link rel="search" title="Search" href="../../search/"><link rel="next" title="Next Steps" href="../up-next/"><link rel="prev" title="Quickstart" href="../simple-example/">
+        <link rel="canonical" href="https://burr.staged.apache.org/getting_started/claude-skill/">
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"><!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
-        <title>Why Burr? - Apache Burr</title>
+        <title>Claude Code Skill - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
@@ -221,7 +221,7 @@ s=d.getElementsByTagName('script')[0];
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -242,10 +242,10 @@ s=d.getElementsByTagName('script')[0];
   <p class="caption" role="heading"><span class="caption-text">Apache Burr</span></p>
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../">Get started</a><input aria-label="Toggle navigation of Get started" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Why Burr?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../why-burr/">Why Burr?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install/">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../simple-example/">Quickstart</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../claude-skill/">Claude Code Skill</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Claude Code Skill</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../up-next/">Next Steps</a></li>
 </ul>
 </li>
@@ -379,12 +379,12 @@ s=d.getElementsByTagName('script')[0];
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="https://github.com/apache/burr/blob/main/docs/getting_started/why-burr.rst?plain=true" title="View this page">
+  <a class="muted-link" href="https://github.com/apache/burr/blob/main/docs/getting_started/claude-skill.rst?plain=true" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
 </div><div class="edit-this-page">
-  <a class="muted-link" href="https://github.com/apache/burr/edit/main/docs/getting_started/why-burr.rst" rel="edit" title="Edit this page">
+  <a class="muted-link" href="https://github.com/apache/burr/edit/main/docs/getting_started/claude-skill.rst" rel="edit" title="Edit this page">
     <svg><use href="#svg-pencil"></use></svg>
     <span class="visually-hidden">Edit this page</span>
   </a>
@@ -396,29 +396,383 @@ s=d.getElementsByTagName('script')[0];
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="why-burr">
-<h1>Why Burr?<a class="headerlink" href="#why-burr" title="Link to this heading">¶</a></h1>
-<p>Why do you need a state machine for your applications? Won’t the normal programming constructs suffice?</p>
-<p><strong>Yes, until a point.</strong> Let’s take a look at what you need to build a production-level LLM application:</p>
+          <section id="claude-code-skill">
+<h1>Claude Code Skill<a class="headerlink" href="#claude-code-skill" title="Link to this heading">¶</a></h1>
+<p>Apache Burr includes a comprehensive Claude Code skill that makes Claude an expert in helping you build Burr applications.</p>
+<section id="what-is-the-claude-code-skill">
+<h2>What is the Claude Code Skill?<a class="headerlink" href="#what-is-the-claude-code-skill" title="Link to this heading">¶</a></h2>
+<p>The Burr Claude skill is a plugin for <a class="reference external" href="https://claude.com/claude-code">Claude Code</a>, Anthropic’s official CLI tool. When active, it teaches Claude how to:</p>
+<ul class="simple">
+<li><p>Build new Burr applications from scratch</p></li>
+<li><p>Write properly structured actions and transitions</p></li>
+<li><p>Follow best practices and design patterns</p></li>
+<li><p>Debug common issues</p></li>
+<li><p>Provide working code examples</p></li>
+<li><p>Review your code for correctness</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<section id="option-1-install-from-github-easiest">
+<h3>Option 1: Install from GitHub (Easiest)<a class="headerlink" href="#option-1-install-from-github-easiest" title="Link to this heading">¶</a></h3>
+<p>Use the Claude CLI to install directly from GitHub:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install to personal skills directory</span>
+claude<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>https://github.com/apache/burr/.claude/skills/burr
+
+<span class="c1"># Or install to your current project</span>
+claude<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>https://github.com/apache/burr/.claude/skills/burr<span class="w"> </span>--project
+</pre></div>
+</div>
+</section>
+<section id="option-2-manual-personal-installation">
+<h3>Option 2: Manual Personal Installation<a class="headerlink" href="#option-2-manual-personal-installation" title="Link to this heading">¶</a></h3>
+<p>Copy the skill to your personal Claude skills directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the Burr repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/apache/burr
+
+<span class="c1"># Copy skill to personal directory</span>
+cp<span class="w"> </span>-r<span class="w"> </span>burr/.claude/skills/burr<span class="w"> </span>~/.claude/skills/
+</pre></div>
+</div>
+</section>
+<section id="option-3-manual-project-installation">
+<h3>Option 3: Manual Project Installation<a class="headerlink" href="#option-3-manual-project-installation" title="Link to this heading">¶</a></h3>
+<p>For team projects, copy the skill to your project’s <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># From your project root</span>
+cp<span class="w"> </span>-r<span class="w"> </span>/path/to/burr/.claude/skills/burr<span class="w"> </span>.claude/skills/
+</pre></div>
+</div>
+</section>
+<section id="verify-installation">
+<h3>Verify Installation<a class="headerlink" href="#verify-installation" title="Link to this heading">¶</a></h3>
+<p>Check that the skill is available:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># In Claude Code, try:</span>
+/burr<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>Or ask Claude naturally:</p>
+<blockquote>
+<div><p>“Help me build a Burr application”</p>
+</div></blockquote>
+</section>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<section id="manual-invocation">
+<h3>Manual Invocation<a class="headerlink" href="#manual-invocation" title="Link to this heading">¶</a></h3>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">/burr</span></code> command to explicitly invoke the skill:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/burr How do I create a streaming action?
+
+/burr Review this action for best practices
+
+/burr Show me an example of parallel execution
+</pre></div>
+</div>
+</section>
+<section id="automatic-invocation">
+<h3>Automatic Invocation<a class="headerlink" href="#automatic-invocation" title="Link to this heading">¶</a></h3>
+<p>Claude automatically loads the skill when it detects you’re working with Burr:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;I&#39;m building a chatbot with Burr&quot;
+
+&quot;Why isn&#39;t my action updating the state?&quot;
+
+&quot;Show me how to add persistence&quot;
+</pre></div>
+</div>
+</section>
+</section>
+<section id="what-can-it-do">
+<h2>What Can It Do?<a class="headerlink" href="#what-can-it-do" title="Link to this heading">¶</a></h2>
+<section id="code-generation">
+<h3>Code Generation<a class="headerlink" href="#code-generation" title="Link to this heading">¶</a></h3>
+<p>Ask Claude to generate complete Burr applications:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;Create a Burr application for a RAG chatbot with document retrieval and reranking&quot;
+</pre></div>
+</div>
+<p>Claude will generate:</p>
+<ul class="simple">
+<li><p>Action functions with proper <code class="docutils literal notranslate"><span class="pre">&#64;action</span></code> decorators</p></li>
+<li><p>State machine transitions with conditions</p></li>
+<li><p>Tracking configuration</p></li>
+<li><p>Complete application setup</p></li>
+</ul>
+</section>
+<section id="code-review">
+<h3>Code Review<a class="headerlink" href="#code-review" title="Link to this heading">¶</a></h3>
+<p>Get feedback on your Burr code:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;Review this application for best practices&quot;
+</pre></div>
+</div>
+<p>Claude will check:</p>
+<ul class="simple">
+<li><p>Correct <code class="docutils literal notranslate"><span class="pre">reads</span></code> and <code class="docutils literal notranslate"><span class="pre">writes</span></code> declarations</p></li>
+<li><p>State immutability</p></li>
+<li><p>Transition coverage</p></li>
+<li><p>Error handling</p></li>
+<li><p>Performance considerations</p></li>
+</ul>
+</section>
+<section id="learning-examples">
+<h3>Learning &amp; Examples<a class="headerlink" href="#learning-examples" title="Link to this heading">¶</a></h3>
+<p>Get working examples for common patterns:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;Show me how to implement retry logic&quot;
+</pre></div>
+</div>
+<p>Claude provides:</p>
+<ul class="simple">
+<li><p>Complete working code</p></li>
+<li><p>Explanation of the pattern</p></li>
+<li><p>Best practices</p></li>
+<li><p>References to documentation</p></li>
+</ul>
+</section>
+<section id="debugging-help">
+<h3>Debugging Help<a class="headerlink" href="#debugging-help" title="Link to this heading">¶</a></h3>
+<p>Troubleshoot issues with Claude’s help:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;My state machine is looping infinitely&quot;
+</pre></div>
+</div>
+<p>Claude will:</p>
+<ul class="simple">
+<li><p>Analyze transition logic</p></li>
+<li><p>Suggest using <code class="docutils literal notranslate"><span class="pre">.visualize()</span></code></p></li>
+<li><p>Provide solutions</p></li>
+<li><p>Reference troubleshooting docs</p></li>
+</ul>
+</section>
+</section>
+<section id="skill-contents">
+<h2>Skill Contents<a class="headerlink" href="#skill-contents" title="Link to this heading">¶</a></h2>
+<p>The skill includes comprehensive documentation:</p>
+<section id="api-reference">
+<h3>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h3>
+<p>Complete documentation of Burr’s API:</p>
+<ul class="simple">
+<li><p>Actions and decorators</p></li>
+<li><p>State management</p></li>
+<li><p>ApplicationBuilder</p></li>
+<li><p>Transitions and conditions</p></li>
+<li><p>Persistence</p></li>
+<li><p>Tracking and hooks</p></li>
+</ul>
+</section>
+<section id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h3>
+<p>Working code examples for:</p>
+<ul class="simple">
+<li><p>Basic chatbots</p></li>
+<li><p>Streaming actions</p></li>
+<li><p>Parallel execution</p></li>
+<li><p>Error handling and retries</p></li>
+<li><p>RAG patterns</p></li>
+<li><p>State persistence</p></li>
+<li><p>Testing</p></li>
+</ul>
+</section>
+<section id="design-patterns">
+<h3>Design Patterns<a class="headerlink" href="#design-patterns" title="Link to this heading">¶</a></h3>
+<p>Best practices and architectural guidance:</p>
+<ul class="simple">
+<li><p>Single responsibility actions</p></li>
+<li><p>State immutability</p></li>
+<li><p>Deterministic actions</p></li>
+<li><p>Error recovery patterns</p></li>
+<li><p>Multi-stage pipelines</p></li>
+<li><p>Branching decision trees</p></li>
+</ul>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h3>
+<p>Solutions for common issues:</p>
+<ul class="simple">
+<li><p>Installation problems</p></li>
+<li><p>State machine loops</p></li>
+<li><p>State not updating</p></li>
+<li><p>Persistence issues</p></li>
+<li><p>Performance optimization</p></li>
+</ul>
+</section>
+</section>
+<section id="common-use-cases">
+<h2>Common Use Cases<a class="headerlink" href="#common-use-cases" title="Link to this heading">¶</a></h2>
+<section id="building-a-chatbot">
+<h3>Building a Chatbot<a class="headerlink" href="#building-a-chatbot" title="Link to this heading">¶</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;Help me build a multi-modal chatbot with Burr&quot;
+</pre></div>
+</div>
+<p>Claude will create a complete chatbot with:</p>
+<ul class="simple">
+<li><p>User input action</p></li>
+<li><p>LLM response action</p></li>
+<li><p>State management for chat history</p></li>
+<li><p>Transitions for conversation flow</p></li>
+</ul>
+</section>
+<section id="adding-features">
+<h3>Adding Features<a class="headerlink" href="#adding-features" title="Link to this heading">¶</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;Add streaming responses to my chatbot&quot;
+</pre></div>
+</div>
+<p>Claude will:</p>
+<ul class="simple">
+<li><p>Show how to convert to a streaming action</p></li>
+<li><p>Provide the generator pattern</p></li>
+<li><p>Update the application setup</p></li>
+</ul>
+</section>
+<section id="debugging">
+<h3>Debugging<a class="headerlink" href="#debugging" title="Link to this heading">¶</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&quot;My action isn&#39;t updating state, what&#39;s wrong?&quot;
+</pre></div>
+</div>
+<p>Claude will:</p>
+<ul class="simple">
+<li><p>Review your code</p></li>
+<li><p>Identify the issue (likely missing <code class="docutils literal notranslate"><span class="pre">return</span></code>)</p></li>
+<li><p>Provide the fix</p></li>
+<li><p>Explain why it matters</p></li>
+</ul>
+</section>
+</section>
+<section id="tips-for-best-results">
+<h2>Tips for Best Results<a class="headerlink" href="#tips-for-best-results" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p><strong>Tracing/telemetry</strong> – LLMs can be chaotic, and you need visibility into what decisions it made and how long it took to make them.</p></li>
-<li><p><strong>State persistence</strong> – thinking about how to save/load your application is a whole other level of infrastructure you need to worry about.</p></li>
-<li><p><strong>Visualization/debugging</strong> – when developing you’ll want to be able to view what it is doing/did + load up the data at any point</p></li>
-<li><p><strong>Manage interaction between users/LLM</strong> – pause for input in certain conditions</p></li>
-<li><p><strong>Data gathering for evaluation + test generation</strong> – storing data run in production to use for later analysis/fine-tuning</p></li>
+<li><p><strong>Be specific</strong> - “Help me add retry logic to my fetch action” is better than “help with errors”</p></li>
+<li><p><strong>Show your code</strong> - Claude works best when it can see what you’re building</p></li>
+<li><p><strong>Ask for examples</strong> - “Show me an example of…” gets working code</p></li>
+<li><p><strong>Reference the skill’s docs</strong> - Ask Claude to check the API reference or patterns guide</p></li>
+<li><p><strong>Use visualization</strong> - Ask Claude to suggest using <code class="docutils literal notranslate"><span class="pre">app.visualize()</span></code> when debugging</p></li>
 </ol>
-<p>You can always patch together various frameworks or build it all yourself, but at that point you’re going to be spending a lot of time on tasks that
-are not related to the core value proposition of your software.</p>
-<p><strong>Burr was built to make these all easier.</strong></p>
-<p>By modeling your application as a state machine of simple python constructs you can have the best of both worlds.
-Bring in whatever infrastructure/tooling you want and get all of the above. Burr is meant to start off as an extremely lightweight tool to
-make building LLM (+ a wide swath of other) applications easier. The value compounds as you leverage more of the ecosystems, plugins, and additional
-features it provides.</p>
+</section>
+<section id="example-conversation">
+<h2>Example Conversation<a class="headerlink" href="#example-conversation" title="Link to this heading">¶</a></h2>
+<p>Here’s a typical interaction:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>You: I want to build a Burr application that processes documents through multiple stages
+
+Claude: I&#39;ll help you create a multi-stage document processing pipeline with Burr.
+Let me create actions for each stage...
+
+[Claude generates code with actions for validation, transformation, enrichment, and output]
+
+You: How do I add error handling?
+
+Claude: I&#39;ll show you how to add error recovery with retries. Here&#39;s the pattern...
+
+[Claude adds error handling actions and transitions]
+
+You: Can you review this code?
+
+Claude: Let me check your application for best practices...
+
+[Claude reviews and provides feedback]
+</pre></div>
+</div>
+</section>
+<section id="integration-with-development">
+<h2>Integration with Development<a class="headerlink" href="#integration-with-development" title="Link to this heading">¶</a></h2>
+<p>The skill integrates seamlessly with your development workflow:</p>
+<ul class="simple">
+<li><p><strong>During design</strong> - Get help planning your state machine architecture</p></li>
+<li><p><strong>While coding</strong> - Generate boilerplate and follow patterns</p></li>
+<li><p><strong>When debugging</strong> - Troubleshoot issues and understand errors</p></li>
+<li><p><strong>In code review</strong> - Verify best practices are followed</p></li>
+</ul>
+</section>
+<section id="customizing-the-skill">
+<h2>Customizing the Skill<a class="headerlink" href="#customizing-the-skill" title="Link to this heading">¶</a></h2>
+<p>You can customize the skill for your needs:</p>
+<ol class="arabic simple">
+<li><p>Edit <code class="docutils literal notranslate"><span class="pre">SKILL.md</span></code> to change instructions</p></li>
+<li><p>Add your own examples to <code class="docutils literal notranslate"><span class="pre">examples.md</span></code></p></li>
+<li><p>Update <code class="docutils literal notranslate"><span class="pre">patterns.md</span></code> with team-specific practices</p></li>
+<li><p>Extend <code class="docutils literal notranslate"><span class="pre">api-reference.md</span></code> with custom actions</p></li>
+</ol>
+<p>Example customization:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/.claude/skills/burr
+<span class="c1"># Edit the skill files</span>
+vim<span class="w"> </span>examples.md
+</pre></div>
+</div>
+</section>
+<section id="updating-the-skill">
+<h2>Updating the Skill<a class="headerlink" href="#updating-the-skill" title="Link to this heading">¶</a></h2>
+<p>To get the latest version:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/burr
+git<span class="w"> </span>pull
+cp<span class="w"> </span>-r<span class="w"> </span>.claude/skills/burr<span class="w"> </span>~/.claude/skills/
+</pre></div>
+</div>
+</section>
+<section id="related-resources">
+<h2>Related Resources<a class="headerlink" href="#related-resources" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.claude.com/claude-code">Claude Code Documentation</a></p></li>
+<li><p><a class="reference external" href="https://github.com/apache/burr/tree/main/examples">Burr Examples</a></p></li>
+<li><p><a class="reference external" href="https://discord.gg/6Zy2DwP4f3">Burr Discord</a></p></li>
+</ul>
+</section>
+<section id="faq">
+<h2>FAQ<a class="headerlink" href="#faq" title="Link to this heading">¶</a></h2>
+<p><strong>Do I need Burr installed to use the skill?</strong></p>
+<p>No, but Claude can help you install it when needed.</p>
+<p><strong>Can I use this with other frameworks?</strong></p>
+<p>Yes! Burr integrates well with LangChain, LlamaIndex, Apache Hamilton, and others.</p>
+<p><strong>Will this work with older Burr versions?</strong></p>
+<p>The skill is designed for current Burr versions. Some APIs may differ in older releases.</p>
+<p><strong>How do I disable the skill?</strong></p>
+<p>Rename the skill directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mv<span class="w"> </span>~/.claude/skills/burr<span class="w"> </span>~/.claude/skills/burr.disabled
+</pre></div>
+</div>
+<p><strong>Can I share my customizations?</strong></p>
+<p>Yes! Contribute improvements back to the project via pull request.</p>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h2>
+<p>Found an issue or want to improve the skill? We welcome contributions!</p>
+<section id="reporting-issues">
+<h3>Reporting Issues<a class="headerlink" href="#reporting-issues" title="Link to this heading">¶</a></h3>
+<p>If you find a bug or have a suggestion:</p>
+<ol class="arabic simple">
+<li><p>Check existing issues at <a class="reference external" href="https://github.com/apache/burr/issues">https://github.com/apache/burr/issues</a></p></li>
+<li><p>Open a new issue with:</p>
+<ul class="simple">
+<li><p>Clear description of the problem or suggestion</p></li>
+<li><p>Steps to reproduce (for bugs)</p></li>
+<li><p>Expected vs actual behavior</p></li>
+<li><p>Burr version and environment details</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="contributing-improvements">
+<h3>Contributing Improvements<a class="headerlink" href="#contributing-improvements" title="Link to this heading">¶</a></h3>
+<p>We especially appreciate pull requests! To contribute:</p>
+<ol class="arabic simple">
+<li><p>Fork the repository</p></li>
+<li><p>Edit the skill files in <code class="docutils literal notranslate"><span class="pre">.claude/skills/burr/</span></code></p></li>
+<li><p>Test your changes with Claude Code</p></li>
+<li><p>Submit a PR to <a class="reference external" href="https://github.com/apache/burr">https://github.com/apache/burr</a> with:</p>
+<ul class="simple">
+<li><p>Clear description of what you changed and why</p></li>
+<li><p>Examples showing the improvement</p></li>
+<li><p>Any relevant issue references</p></li>
+</ul>
+</li>
+</ol>
+<p>Small fixes like typos, improved examples, or clearer explanations are always welcome!</p>
+<p>The Burr community appreciates all contributions, big and small.</p>
+</section>
+</section>
 </section>
 
         </article>
@@ -426,23 +780,23 @@ features it provides.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../install/">
+          <a class="next-page" href="../up-next/">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Installation</div>
+                <div class="title">Next Steps</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../">
+          <a class="prev-page" href="../simple-example/">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Get started</div>
+                <div class="title">Quickstart</div>
                 
               </div>
             </a>
@@ -477,8 +831,71 @@ features it provides.</p>
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Claude Code Skill</a><ul>
+<li><a class="reference internal" href="#what-is-the-claude-code-skill">What is the Claude Code Skill?</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#option-1-install-from-github-easiest">Option 1: Install from GitHub (Easiest)</a></li>
+<li><a class="reference internal" href="#option-2-manual-personal-installation">Option 2: Manual Personal Installation</a></li>
+<li><a class="reference internal" href="#option-3-manual-project-installation">Option 3: Manual Project Installation</a></li>
+<li><a class="reference internal" href="#verify-installation">Verify Installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#manual-invocation">Manual Invocation</a></li>
+<li><a class="reference internal" href="#automatic-invocation">Automatic Invocation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#what-can-it-do">What Can It Do?</a><ul>
+<li><a class="reference internal" href="#code-generation">Code Generation</a></li>
+<li><a class="reference internal" href="#code-review">Code Review</a></li>
+<li><a class="reference internal" href="#learning-examples">Learning &amp; Examples</a></li>
+<li><a class="reference internal" href="#debugging-help">Debugging Help</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#skill-contents">Skill Contents</a><ul>
+<li><a class="reference internal" href="#api-reference">API Reference</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#design-patterns">Design Patterns</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common-use-cases">Common Use Cases</a><ul>
+<li><a class="reference internal" href="#building-a-chatbot">Building a Chatbot</a></li>
+<li><a class="reference internal" href="#adding-features">Adding Features</a></li>
+<li><a class="reference internal" href="#debugging">Debugging</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tips-for-best-results">Tips for Best Results</a></li>
+<li><a class="reference internal" href="#example-conversation">Example Conversation</a></li>
+<li><a class="reference internal" href="#integration-with-development">Integration with Development</a></li>
+<li><a class="reference internal" href="#customizing-the-skill">Customizing the Skill</a></li>
+<li><a class="reference internal" href="#updating-the-skill">Updating the Skill</a></li>
+<li><a class="reference internal" href="#related-resources">Related Resources</a></li>
+<li><a class="reference internal" href="#faq">FAQ</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a><ul>
+<li><a class="reference internal" href="#reporting-issues">Reporting Issues</a></li>
+<li><a class="reference internal" href="#contributing-improvements">Contributing Improvements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
