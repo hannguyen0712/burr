@@ -29,7 +29,7 @@
         <title>Streaming Actions - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=2c829df3" />
     <link rel="stylesheet" type="text/css" href="../../_static/testimonials.css?v=cc24216e" />
@@ -596,6 +596,20 @@ be consistent with the asynchronous method. If you’re using the old version, t
 <li><p>The final result will be a <code class="docutils literal notranslate"><span class="pre">yield</span></code> instead of a <code class="docutils literal notranslate"><span class="pre">return</span></code></p></li>
 </ol>
 </section>
+<section id="telemetry-observability">
+<h2>Telemetry &amp; Observability<a class="headerlink" href="#telemetry-observability" title="Link to this heading">¶</a></h2>
+<p>Streaming actions are instrumented with lifecycle hooks that bracket each generator
+yield. This enables two forms of observability:</p>
+<p><strong>OpenTelemetry</strong> — The <a class="reference internal" href="../../reference/integrations/opentelemetry/#burr.integrations.opentelemetry.OpenTelemetryBridge" title="burr.integrations.opentelemetry.OpenTelemetryBridge"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpenTelemetryBridge</span></code></a>
+supports configurable streaming telemetry modes (<code class="docutils literal notranslate"><span class="pre">SINGLE_SPAN</span></code>, <code class="docutils literal notranslate"><span class="pre">EVENT</span></code>, <code class="docutils literal notranslate"><span class="pre">CHUNK_SPANS</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SINGLE_AND_CHUNK_SPANS</span></code>) that control how streaming spans and events are emitted. These
+modes provide timing attributes such as generation time, consumer time, iteration count, and
+time to first token (TTFT). See <a class="reference internal" href="../additional-visibility/#opentelref"><span class="std std-ref">Streaming Telemetry Modes</span></a> for details.</p>
+<p><strong>Burr Tracker</strong> — The <a class="reference internal" href="../../reference/tracking/#burr.tracking.LocalTrackingClient" title="burr.tracking.LocalTrackingClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalTrackingClient</span></code></a> (and
+<code class="docutils literal notranslate"><span class="pre">S3TrackingClient</span></code>) automatically accumulate generation-vs-consumer timing for streaming
+actions and write it to the <code class="docutils literal notranslate"><span class="pre">end_stream</span></code> log entry. The Burr UI displays this data in the
+step detail view, showing the generation/consumer time split and TTFT.</p>
+</section>
 </section>
 
         </article>
@@ -670,6 +684,7 @@ be consistent with the asynchronous method. If you’re using the old version, t
 <li><a class="reference internal" href="#definition">Definition</a></li>
 <li><a class="reference internal" href="#usage">Usage</a></li>
 <li><a class="reference internal" href="#considerations">Considerations</a></li>
+<li><a class="reference internal" href="#telemetry-observability">Telemetry &amp; Observability</a></li>
 </ul>
 </li>
 </ul>

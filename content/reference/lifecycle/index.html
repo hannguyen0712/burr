@@ -29,7 +29,7 @@
         <title>Lifecycle API - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=2c829df3" />
     <link rel="stylesheet" type="text/css" href="../../_static/testimonials.css?v=cc24216e" />
@@ -649,6 +649,38 @@ allow us to say <em>which</em> method is being called for the following hooks.</
 <dd><p>Hook that runs after an async application method (step/iterate/run/stream…) is called.</p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="burr.lifecycle.base.PreStreamGenerateHook">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">burr.lifecycle.base.</span></span><span class="sig-name descname"><span class="pre">PreStreamGenerateHook</span></span><a class="headerlink" href="#burr.lifecycle.base.PreStreamGenerateHook" title="Link to this definition">¶</a></dt>
+<dd><p>Hook that runs before the generator produces its next item.
+Paired with PostStreamGenerateHook to bracket the actual generation time
+for each stream item, excluding consumer processing time.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="burr.lifecycle.base.PreStreamGenerateHookAsync">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">burr.lifecycle.base.</span></span><span class="sig-name descname"><span class="pre">PreStreamGenerateHookAsync</span></span><a class="headerlink" href="#burr.lifecycle.base.PreStreamGenerateHookAsync" title="Link to this definition">¶</a></dt>
+<dd><p>Hook that runs before the generator produces its next item (async variant).
+Paired with PostStreamGenerateHookAsync to bracket the actual generation time
+for each stream item, excluding consumer processing time.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="burr.lifecycle.base.PostStreamGenerateHook">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">burr.lifecycle.base.</span></span><span class="sig-name descname"><span class="pre">PostStreamGenerateHook</span></span><a class="headerlink" href="#burr.lifecycle.base.PostStreamGenerateHook" title="Link to this definition">¶</a></dt>
+<dd><p>Hook that runs after the generator has produced an item (or exhausted/errored).
+Paired with PreStreamGenerateHook to bracket the actual generation time
+for each stream item, excluding consumer processing time.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="burr.lifecycle.base.PostStreamGenerateHookAsync">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">burr.lifecycle.base.</span></span><span class="sig-name descname"><span class="pre">PostStreamGenerateHookAsync</span></span><a class="headerlink" href="#burr.lifecycle.base.PostStreamGenerateHookAsync" title="Link to this definition">¶</a></dt>
+<dd><p>Hook that runs after the generator has produced an item (or exhausted/errored).
+Async variant. Paired with PreStreamGenerateHookAsync to bracket the actual
+generation time for each stream item, excluding consumer processing time.</p>
+</dd></dl>
+
 <p>These hooks are available for you to use:</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="burr.lifecycle.default.StateAndResultsFullLogger">
@@ -791,6 +823,10 @@ allow us to say <em>which</em> method is being called for the following hooks.</
 <li><a class="reference internal" href="#burr.lifecycle.base.PreApplicationExecuteCallHookAsync"><code class="docutils literal notranslate"><span class="pre">PreApplicationExecuteCallHookAsync</span></code></a></li>
 <li><a class="reference internal" href="#burr.lifecycle.base.PostApplicationExecuteCallHook"><code class="docutils literal notranslate"><span class="pre">PostApplicationExecuteCallHook</span></code></a></li>
 <li><a class="reference internal" href="#burr.lifecycle.base.PostApplicationExecuteCallHookAsync"><code class="docutils literal notranslate"><span class="pre">PostApplicationExecuteCallHookAsync</span></code></a></li>
+<li><a class="reference internal" href="#burr.lifecycle.base.PreStreamGenerateHook"><code class="docutils literal notranslate"><span class="pre">PreStreamGenerateHook</span></code></a></li>
+<li><a class="reference internal" href="#burr.lifecycle.base.PreStreamGenerateHookAsync"><code class="docutils literal notranslate"><span class="pre">PreStreamGenerateHookAsync</span></code></a></li>
+<li><a class="reference internal" href="#burr.lifecycle.base.PostStreamGenerateHook"><code class="docutils literal notranslate"><span class="pre">PostStreamGenerateHook</span></code></a></li>
+<li><a class="reference internal" href="#burr.lifecycle.base.PostStreamGenerateHookAsync"><code class="docutils literal notranslate"><span class="pre">PostStreamGenerateHookAsync</span></code></a></li>
 <li><a class="reference internal" href="#burr.lifecycle.default.StateAndResultsFullLogger"><code class="docutils literal notranslate"><span class="pre">StateAndResultsFullLogger</span></code></a><ul>
 <li><a class="reference internal" href="#burr.lifecycle.default.StateAndResultsFullLogger.__init__"><code class="docutils literal notranslate"><span class="pre">StateAndResultsFullLogger.__init__()</span></code></a></li>
 </ul>

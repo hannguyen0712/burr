@@ -29,7 +29,7 @@
         <title>Tracking - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=2c829df3" />
     <link rel="stylesheet" type="text/css" href="../../_static/testimonials.css?v=cc24216e" />
@@ -639,6 +639,20 @@ as the last step.</p>
 
 </dd></dl>
 
+<section id="streaming-timing">
+<h2>Streaming Timing<a class="headerlink" href="#streaming-timing" title="Link to this heading">¶</a></h2>
+<p>For streaming actions, the tracker automatically accumulates timing data by implementing
+<code class="docutils literal notranslate"><span class="pre">PreStreamGenerateHook</span></code> and <code class="docutils literal notranslate"><span class="pre">PostStreamGenerateHook</span></code>. When a streaming action completes,
+the <code class="docutils literal notranslate"><span class="pre">end_stream</span></code> log entry includes the following optional timing fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">generation_time_ms</span></code> — Sum of time spent inside the generator producing items (excludes consumer wait time).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">consumer_time_ms</span></code> — Sum of time the consumer spent processing yielded items between yields.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">first_item_time_ms</span></code> — Time from stream start to first item produced (time to first token / TTFT).</p></li>
+</ul>
+<p>These fields are <code class="docutils literal notranslate"><span class="pre">null</span></code> when the streaming timing hooks have not fired (e.g. old log files or
+non-instrumented generators). The Burr UI renders these fields in the step detail view when
+available, falling back to the legacy throughput calculation otherwise.</p>
+</section>
 </section>
 
         </article>
@@ -722,6 +736,7 @@ as the last step.</p>
 <li><a class="reference internal" href="#burr.tracking.LocalTrackingClient.pre_run_step"><code class="docutils literal notranslate"><span class="pre">LocalTrackingClient.pre_run_step()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#streaming-timing">Streaming Timing</a></li>
 </ul>
 </li>
 </ul>

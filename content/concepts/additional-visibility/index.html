@@ -29,7 +29,7 @@
         <title>Additional Visibility - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=2c829df3" />
     <link rel="stylesheet" type="text/css" href="../../_static/testimonials.css?v=cc24216e" />
@@ -643,6 +643,44 @@ it as you see fit).</p>
 </pre></div>
 </div>
 <p>With this you can log to any OpenTelemetry provider.</p>
+<section id="streaming-telemetry-modes">
+<h4>Streaming Telemetry Modes<a class="headerlink" href="#streaming-telemetry-modes" title="Link to this heading">¶</a></h4>
+<p>When using streaming actions with the <code class="docutils literal notranslate"><span class="pre">OpenTelemetryBridge</span></code>, you can control how
+streaming telemetry is emitted via the <code class="docutils literal notranslate"><span class="pre">streaming_telemetry</span></code> parameter. This accepts
+a <a class="reference internal" href="../../reference/integrations/opentelemetry/#burr.integrations.opentelemetry.StreamingTelemetryMode" title="burr.integrations.opentelemetry.StreamingTelemetryMode"><code class="xref py py-class docutils literal notranslate"><span class="pre">StreamingTelemetryMode</span></code></a> enum value:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">burr.integrations.opentelemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenTelemetryBridge</span><span class="p">,</span> <span class="n">StreamingTelemetryMode</span>
+
+<span class="c1"># Default: one action span with streaming attributes (generation time, consumer time, TTFT)</span>
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">OpenTelemetryBridge</span><span class="p">(</span><span class="n">tracer</span><span class="o">=</span><span class="n">tracer</span><span class="p">,</span> <span class="n">streaming_telemetry</span><span class="o">=</span><span class="n">StreamingTelemetryMode</span><span class="o">.</span><span class="n">SINGLE_SPAN</span><span class="p">)</span>
+
+<span class="c1"># Lightest-weight: no action span, single summary event on the method span</span>
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">OpenTelemetryBridge</span><span class="p">(</span><span class="n">tracer</span><span class="o">=</span><span class="n">tracer</span><span class="p">,</span> <span class="n">streaming_telemetry</span><span class="o">=</span><span class="n">StreamingTelemetryMode</span><span class="o">.</span><span class="n">EVENT</span><span class="p">)</span>
+
+<span class="c1"># Per-yield spans: one child span per generator yield, measuring generation time only</span>
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">OpenTelemetryBridge</span><span class="p">(</span><span class="n">tracer</span><span class="o">=</span><span class="n">tracer</span><span class="p">,</span> <span class="n">streaming_telemetry</span><span class="o">=</span><span class="n">StreamingTelemetryMode</span><span class="o">.</span><span class="n">CHUNK_SPANS</span><span class="p">)</span>
+
+<span class="c1"># Maximum visibility: action span with attributes + per-yield child spans</span>
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">OpenTelemetryBridge</span><span class="p">(</span><span class="n">tracer</span><span class="o">=</span><span class="n">tracer</span><span class="p">,</span> <span class="n">streaming_telemetry</span><span class="o">=</span><span class="n">StreamingTelemetryMode</span><span class="o">.</span><span class="n">SINGLE_AND_CHUNK_SPANS</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The four modes are:</p>
+<ul class="simple">
+<li><p><strong>SINGLE_SPAN</strong> (default) — The action span covers the full generator lifetime. Span attributes
+provide the generation-vs-consumer time breakdown (<code class="docutils literal notranslate"><span class="pre">stream.generation_time_ms</span></code>,
+<code class="docutils literal notranslate"><span class="pre">stream.consumer_time_ms</span></code>, <code class="docutils literal notranslate"><span class="pre">stream.iteration_count</span></code>, <code class="docutils literal notranslate"><span class="pre">stream.first_item_time_ms</span></code>).
+This is backwards-compatible with the pre-existing behavior.</p></li>
+<li><p><strong>EVENT</strong> — No action span is created. A single <code class="docutils literal notranslate"><span class="pre">stream_completed</span></code> event is added to the
+method span with the same timing attributes. This is the lightest-weight option.</p></li>
+<li><p><strong>CHUNK_SPANS</strong> — No action span. One child span per generator yield, each measuring only
+the generation time for that item.</p></li>
+<li><p><strong>SINGLE_AND_CHUNK_SPANS</strong> — Combines SINGLE_SPAN and CHUNK_SPANS: the action span with
+streaming attributes, plus per-yield child spans nested under it.</p></li>
+</ul>
+<p>Non-streaming actions are unaffected by this setting — they always get an action span regardless
+of the mode.</p>
+<p>See the <a class="reference external" href="https://github.com/apache/burr/tree/main/examples/opentelemetry/streaming_telemetry_modes.py">streaming_telemetry_modes.py example</a>
+for a runnable demo of all four modes.</p>
+</section>
 </section>
 <section id="instrumenting-libraries">
 <h3>Instrumenting libraries<a class="headerlink" href="#instrumenting-libraries" title="Link to this heading">¶</a></h3>
@@ -763,7 +801,10 @@ it as you see fit).</p>
 <li><a class="reference internal" href="#tracing-functions">Tracing Functions</a></li>
 <li><a class="reference internal" href="#opentelref">OpenTelemetry</a><ul>
 <li><a class="reference internal" href="#capturing-opentelemetry-events">Capturing OpenTelemetry events</a></li>
-<li><a class="reference internal" href="#logging-to-opentelemetry">Logging to OpenTelemetry</a></li>
+<li><a class="reference internal" href="#logging-to-opentelemetry">Logging to OpenTelemetry</a><ul>
+<li><a class="reference internal" href="#streaming-telemetry-modes">Streaming Telemetry Modes</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#instrumenting-libraries">Instrumenting libraries</a><ul>
 <li><a class="reference internal" href="#llm-specific-telemetry">LLM-specific Telemetry</a></li>
 <li><a class="reference internal" href="#burr-s-init-instruments">Burr’s <code class="docutils literal notranslate"><span class="pre">init_instruments()</span></code></a></li>

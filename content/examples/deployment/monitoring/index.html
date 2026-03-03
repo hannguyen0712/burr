@@ -29,7 +29,7 @@
         <title>Monitoring in Production - Apache Burr</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=2c829df3" />
     <link rel="stylesheet" type="text/css" href="../../../_static/testimonials.css?v=cc24216e" />
@@ -403,7 +403,10 @@ s=d.getElementsByTagName('script')[0];
           <section id="monitoring-in-production">
 <h1>Monitoring in Production<a class="headerlink" href="#monitoring-in-production" title="Link to this heading">¶</a></h1>
 <p>Burr’s telemetry UI is meant both for debugging and running in production. It can consume <a class="reference external" href="https://burr.apache.org/reference/integrations/opentelemetry/">OpenTelemetry traces</a>,
-and has a suite of useful capabilities for debugging Burr applications.</p>
+and has a suite of useful capabilities for debugging Burr applications. For streaming actions, the tracker
+and UI surface generation-vs-consumer timing (including time to first token), and the
+<code class="docutils literal notranslate"><span class="pre">OpenTelemetryBridge</span></code> supports <a class="reference internal" href="../../../concepts/additional-visibility/#opentelref"><span class="std std-ref">configurable streaming telemetry modes</span></a> for
+controlling span and event granularity.</p>
 <p>It has two (current) implementations:</p>
 <ol class="arabic simple">
 <li><p><a class="reference external" href="https://burr.apache.org/concepts/tracking/">Local (filesystem) tracking</a> (default, for debugging or lower-scale production use-cases with a distributed file-system)</p></li>
