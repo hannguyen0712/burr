@@ -574,9 +574,9 @@ app = (
 
 **SQLite Persister:**
 ```python
-from burr.core.persistence import SQLLitePersister
+from burr.core.persistence import SQLitePersister
 
-persister = SQLLitePersister(
+persister = SQLitePersister(
     db_path="app.db",
     table_name="burr_state",
     connect_kwargs={"check_same_thread": False}
@@ -709,7 +709,7 @@ app = (
 Special action that captures runtime inputs:
 
 ```python
-from burr.core import Input
+from burr.core.action import Input
 
 app = (
     ApplicationBuilder()

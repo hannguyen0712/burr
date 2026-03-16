@@ -353,7 +353,7 @@ Execute multiple actions in parallel using Apache Burr's parallelism APIs.
 
 ```python
 from burr.core.parallelism import MapActions, RunnableGraph
-from burr.core import action, State, ApplicationContext
+from burr.core import action, State, ApplicationContext, Result
 from typing import Dict, Any
 
 @action(reads=["text"], writes=["sentiment"])
@@ -403,8 +403,11 @@ class ParallelTextAnalysis(MapActions):
 
 app = (
     ApplicationBuilder()
-    .with_actions(parallel_analysis=ParallelTextAnalysis())
-    .with_transitions(("parallel_analysis", "parallel_analysis"))  # Or continue to next action
+    .with_actions(
+        parallel_analysis=ParallelTextAnalysis(),
+        done=Result("analysis"),
+    )
+    .with_transitions(("parallel_analysis", "done"))
     .with_state(text="Sample text to analyze")
     .with_entrypoint("parallel_analysis")
     .build()
@@ -416,7 +419,7 @@ app = (
 Save and resume application state.
 
 ```python
-from burr.core.persistence import SQLLitePersister
+from burr.core.persistence import SQLitePersister
 
 @action(reads=["step"], writes=["step", "result"])
 def long_running_step(state: State, step_name: str) -> State:
@@ -428,7 +431,7 @@ def long_running_step(state: State, step_name: str) -> State:
     )
 
 # Set up persister
-persister = SQLLitePersister(
+persister = SQLitePersister(
     db_path="~/.burr/my_app.db",
     table_name="app_state"
 )

@@ -97,111 +97,53 @@ def process_user(state: State) -> State:
 
 ### Regular State (Dictionary-Based)
 
-**Reading from state:**
+State is immutable — all methods return new `State` objects.
+
 ```python
-# Use bracket notation to access state values
-value = state["key"]
-chat_history = state["chat_history"]
-counter = state["counter"]
+value = state["key"]                     # read
+new_state = state.update(counter=5)      # set keys
+new_state = state.append(history=item)   # append to list
+new_state = state.increment(counter=1)   # increment number
+new_state = state.update(a=1).append(b=item)  # chain calls
 ```
 
-**Updating state:**
-State is immutable. Methods return NEW State objects:
+Actions return `Tuple[dict, State]` (or just `State` as shorthand):
 ```python
-# state.update() - set/update keys, returns new State
-new_state = state.update(counter=5, name="Alice")
-
-# state.append() - append to lists, returns new State
-new_state = state.append(chat_history={"role": "user", "content": "hi"})
-
-# state.increment() - increment numbers, returns new State
-new_state = state.increment(counter=1)
-
-# Chaining - each method returns a State, enabling fluent patterns
-new_state = state.update(prompt=prompt).append(chat_history=item)
-```
-
-**Action return pattern:**
-Actions return `Tuple[dict, State]`:
-```python
-from typing import Tuple
-
 @action(reads=["prompt"], writes=["response", "chat_history"])
 def ai_respond(state: State) -> Tuple[dict, State]:
-    # 1. Read from state
     prompt = state["prompt"]
-
-    # 2. Process
     response = call_llm(prompt)
-
-    # 3. Return (result_dict, new_state)
-    # result_dict is exposed to callers/tracking
-    # new_state is the updated immutable state
     return {"response": response}, state.update(response=response).append(
         chat_history={"role": "assistant", "content": response}
     )
 ```
 
-**Shorthand (also valid):**
+### Pydantic Typed State
+
+Use `@action.pydantic`, attribute access, and in-place mutation:
 ```python
-@action(reads=["counter"], writes=["counter"])
-def increment(state: State) -> State:
-    result = {"counter": state["counter"] + 1}
-    # Framework infers result from state updates
-    return state.update(**result)
-```
+class AppState(BaseModel):
+    prompt: Optional[str] = None
+    response: Optional[str] = None
 
-### Pydantic Typed State (Different Pattern)
-
-**Define state model:**
-```python
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class ApplicationState(BaseModel):
-    prompt: Optional[str] = Field(default=None, description="User prompt")
-    response: Optional[str] = Field(default=None, description="AI response")
-    chat_history: list[dict] = Field(default_factory=list)
-```
-
-**Configure application:**
-```python
-from burr.integrations.pydantic import PydanticTypingSystem
-
-app = (
-    ApplicationBuilder()
-    .with_typing(PydanticTypingSystem(ApplicationState))
-    .with_state(ApplicationState())
-    .build()
-)
-```
-
-**Access typed state:**
-```python
-# Use attribute access (not bracket notation)
 @action.pydantic(reads=["prompt"], writes=["response"])
-def ai_respond(state: ApplicationState) -> ApplicationState:
-    # 1. Read using attributes
-    prompt = state.prompt
-
-    # 2. Process
-    response = call_llm(prompt)
-
-    # 3. Mutate in-place and return state
-    # (Mutation happens on internal copy)
-    state.response = response
+def ai_respond(state: AppState) -> AppState:
+    state.response = call_llm(state.prompt)
     return state
 ```
 
-**Key differences:**
+Configure with `PydanticTypingSystem`:
+```python
+app = ApplicationBuilder().with_typing(PydanticTypingSystem(AppState)).with_state(AppState()).build()
+```
 
 | Aspect | Regular State | Pydantic Typed State |
 |--------|---------------|---------------------|
 | **Access** | `state["key"]` | `state.key` |
-| **Return** | `Tuple[dict, State]` | `ApplicationState` |
-| **Decorator** | `@action(reads=[], writes=[])` | `@action.pydantic(reads=[], writes=[])` |
-| **Updates** | Must use `.update()`, `.append()` | In-place mutation |
-| **Type Safety** | Runtime only | IDE support + validation |
+| **Return** | `Tuple[dict, State]` | `AppState` |
+| **Decorator** | `@action(...)` | `@action.pydantic(...)` |
+| **Updates** | `.update()`, `.append()` | In-place mutation |
+| **Type Safety** | Runtime only | IDE + validation |
 
 ## Common Patterns
 
@@ -341,18 +283,15 @@ app = (
 
 ### Pattern: Branching Decision Tree
 
-Route based on complex conditions.
+Route to different handlers using `expr()`, `when()`, and `default`:
 
 ```python
-@action(reads=["content"], writes=["analysis"])
+@action(reads=["content"], writes=["content_type", "complexity"])
 def analyze_content(state: State) -> State:
-    """Analyze content type and complexity."""
-    analysis = {
-        "content_type": detect_type(state["content"]),
-        "complexity": calculate_complexity(state["content"]),
-        "language": detect_language(state["content"])
-    }
-    return state.update(analysis=analysis)
+    return state.update(
+        content_type=detect_type(state["content"]),
+        complexity=calculate_complexity(state["content"]),
+    )
 
 @action(reads=["content"], writes=["result"])
 def handle_simple_text(state: State) -> State:
@@ -362,31 +301,13 @@ def handle_simple_text(state: State) -> State:
 def handle_complex_text(state: State) -> State:
     return state.update(result=complex_processor(state["content"]))
 
-@action(reads=["content"], writes=["result"])
-def handle_code(state: State) -> State:
-    return state.update(result=code_processor(state["content"]))
-
-@action(reads=["content"], writes=["result"])
-def handle_unsupported(state: State) -> State:
-    return state.update(result={"error": "Unsupported content type"})
-
 app = (
     ApplicationBuilder()
-    .with_actions(
-        analyze_content,
-        handle_simple_text,
-        handle_complex_text,
-        handle_code,
-        handle_unsupported
-    )
+    .with_actions(analyze_content, handle_simple_text, handle_complex_text)
     .with_transitions(
         ("analyze_content", "handle_simple_text",
-         expr("analysis['content_type'] == 'text' and analysis['complexity'] < 5")),
-        ("analyze_content", "handle_complex_text",
-         expr("analysis['content_type'] == 'text' and analysis['complexity'] >= 5")),
-        ("analyze_content", "handle_code",
-         when(analysis={"content_type": "code"})),
-        ("analyze_content", "handle_unsupported", default)
+         expr("content_type == 'text' and complexity < 5")),
+        ("analyze_content", "handle_complex_text", default),
     )
     .with_entrypoint("analyze_content")
     .build()
@@ -650,9 +571,9 @@ def train_epoch(state: State) -> State:
 
 **Enable persistence for long-running workflows:**
 ```python
-from burr.core.persistence import SQLLitePersister
+from burr.core.persistence import SQLitePersister
 
-persister = SQLLitePersister("prod.db", "workflows")
+persister = SQLitePersister("prod.db", "workflows")
 app = (
     ApplicationBuilder()
     .with_actions(...)

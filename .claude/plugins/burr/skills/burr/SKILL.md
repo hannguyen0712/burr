@@ -122,164 +122,18 @@ When users encounter problems:
 
 ### 5. Adding Features
 
-Common enhancement requests:
+See [api-reference.md](api-reference.md) for streaming, async, and parallel execution APIs. See [examples.md](examples.md) for working code.
 
-**Streaming responses**:
-```python
-@action(reads=["input"], writes=["output"])
-def streaming_action(state: State) -> Generator[State, None, Tuple[dict, State]]:
-    for chunk in stream_data():
-        yield state.update(current_chunk=chunk)
-    result = {"output": final_result}
-    return result, state.update(**result)
-```
+## State Management Quick Reference
 
-**Async actions**:
-```python
-@action(reads=["data"], writes=["result"])
-async def async_action(state: State) -> State:
-    result = await fetch_data()
-    return state.update(result=result)
-```
-
-**Parallel execution**:
-```python
-from burr.core.parallelism import MapStates, RunnableGraph
-
-# Apply same action to multiple states
-class TestMultiplePrompts(MapStates):
-    def action(self, state: State, inputs: dict) -> Action | Callable | RunnableGraph:
-        return query_llm.with_name("query_llm")
-
-    def states(self, state: State, context: ApplicationContext, inputs: dict):
-        for prompt in state["prompts"]:
-            yield state.update(prompt=prompt)
-
-    def reduce(self, state: State, states):
-        results = [s["result"] for s in states]
-        return state.update(all_results=results)
-
-    @property
-    def reads(self) -> list[str]:
-        return ["prompts"]
-
-    @property
-    def writes(self) -> list[str]:
-        return ["all_results"]
-
-app = ApplicationBuilder().with_actions(
-    multi_prompt=TestMultiplePrompts()
-).build()
-```
-
-## State Management Patterns
-
-### Regular State (Dictionary-Based)
-
-**Reading from state:**
-```python
-# Use bracket notation to access state values
-value = state["key"]
-chat_history = state["chat_history"]
-counter = state["counter"]
-```
-
-**Updating state:**
-State is immutable. Methods return NEW State objects:
-```python
-# state.update() - set/update keys, returns new State
-new_state = state.update(counter=5, name="Alice")
-
-# state.append() - append to lists, returns new State
-new_state = state.append(chat_history={"role": "user", "content": "hi"})
-
-# state.increment() - increment numbers, returns new State
-new_state = state.increment(counter=1)
-
-# Chaining - each method returns a State, enabling fluent patterns
-new_state = state.update(prompt=prompt).append(chat_history=item)
-```
-
-**Action return pattern:**
-Actions return `Tuple[dict, State]`:
-```python
-from typing import Tuple
-
-@action(reads=["prompt"], writes=["response", "chat_history"])
-def ai_respond(state: State) -> Tuple[dict, State]:
-    # 1. Read from state
-    prompt = state["prompt"]
-
-    # 2. Process
-    response = call_llm(prompt)
-
-    # 3. Return (result_dict, new_state)
-    # result_dict is exposed to callers/tracking
-    # new_state is the updated immutable state
-    return {"response": response}, state.update(response=response).append(
-        chat_history={"role": "assistant", "content": response}
-    )
-```
-
-**Shorthand (also valid):**
-```python
-@action(reads=["counter"], writes=["counter"])
-def increment(state: State) -> State:
-    result = {"counter": state["counter"] + 1}
-    # Framework infers result from state updates
-    return state.update(**result)
-```
-
-### Pydantic Typed State (Different Pattern)
-
-**Define state model:**
-```python
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class ApplicationState(BaseModel):
-    prompt: Optional[str] = Field(default=None, description="User prompt")
-    response: Optional[str] = Field(default=None, description="AI response")
-    chat_history: list[dict] = Field(default_factory=list)
-```
-
-**Configure application:**
-```python
-from burr.integrations.pydantic import PydanticTypingSystem
-
-app = (
-    ApplicationBuilder()
-    .with_typing(PydanticTypingSystem(ApplicationState))
-    .with_state(ApplicationState())
-    .build()
-)
-```
-
-**Access typed state:**
-```python
-# Use attribute access (not bracket notation)
-@action.pydantic(reads=["prompt"], writes=["response"])
-def ai_respond(state: ApplicationState) -> ApplicationState:
-    # 1. Read using attributes
-    prompt = state.prompt
-
-    # 2. Process
-    response = call_llm(prompt)
-
-    # 3. Mutate in-place and return state
-    # (Mutation happens on internal copy)
-    state.response = response
-    return state
-```
-
-**Key differences:**
+Burr supports two state patterns. See [patterns.md](patterns.md) for full details and examples.
 
 | Aspect | Regular State | Pydantic Typed State |
 |--------|---------------|---------------------|
 | **Access** | `state["key"]` | `state.key` |
 | **Return** | `Tuple[dict, State]` | `ApplicationState` |
 | **Decorator** | `@action(reads=[], writes=[])` | `@action.pydantic(reads=[], writes=[])` |
-| **Updates** | Must use `.update()`, `.append()` | In-place mutation |
+| **Updates** | `.update()`, `.append()`, `.increment()` | In-place mutation |
 | **Type Safety** | Runtime only | IDE support + validation |
 
 ## Code Quality Standards
@@ -298,7 +152,7 @@ When writing or reviewing Apache Burr code:
 - **Loops**: Use recursive transitions with conditions
 - **Error handling**: Create error actions and transition to them on failure
 - **Multi-step workflows**: Chain actions with clear single responsibilities
-- **State persistence**: Use `SQLLitePersister` or `initialize_from` for resumability
+- **State persistence**: Use `SQLitePersister` or `initialize_from` for resumability
 - **Observability**: Always include `.with_tracker()` for the Burr UI
 
 ## Integration Scenarios

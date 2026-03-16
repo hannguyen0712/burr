@@ -430,9 +430,9 @@ app = build_app()  # Starts from beginning, not step1
 
 Set up persistence properly:
 ```python
-from burr.core.persistence import SQLLitePersister
+from burr.core.persistence import SQLitePersister
 
-persister = SQLLitePersister("app.db", "state")
+persister = SQLitePersister("app.db", "state")
 persister.initialize()  # Don't forget to initialize!
 
 app = (
