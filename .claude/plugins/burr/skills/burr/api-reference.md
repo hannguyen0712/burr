@@ -317,7 +317,10 @@ from burr.core import when
 - `key__gt=value` - Greater than
 - `key__gte=value` - Greater than or equal
 - `key__in=[values]` - In list
-- `key__contains=value` - List contains value
+- `key__notin=[values]` - Not in list
+- `key__contains=value` - Collection/string contains value
+- `key__is=value` - Identity check (`is`), useful for `None`
+- `key__isnot=value` - Negated identity (`is not`)
 
 **Using `expr()`** - Arbitrary Python expressions:
 ```python
