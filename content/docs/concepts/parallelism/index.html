@@ -1011,7 +1011,7 @@ LLM might come up with a solution.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">burr.integrations.persisters.b_asyncpg</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncPGPersister</span>
 
 <span class="c1"># Create an async persister with a connection pool</span>
-<span class="n">persister</span> <span class="o">=</span> <span class="n">AsyncPGPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span>
+<span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncPGPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span>
     <span class="n">host</span><span class="o">=</span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="o">=</span><span class="mi">5432</span><span class="p">,</span>
     <span class="n">user</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
@@ -1020,7 +1020,7 @@ LLM might come up with a solution.</p>
     <span class="n">use_pool</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Important for parallelism!</span>
 <span class="p">)</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="p">(</span>
+<span class="n">app</span> <span class="o">=</span> <span class="k">await</span> <span class="p">(</span>
     <span class="n">ApplicationBuilder</span><span class="p">()</span>
     <span class="o">.</span><span class="n">with_state_persister</span><span class="p">(</span><span class="n">persister</span><span class="p">)</span>
     <span class="o">.</span><span class="n">with_action</span><span class="p">(</span>
@@ -1032,12 +1032,12 @@ LLM might come up with a solution.</p>
 </div>
 <p>Connection pools are crucial for handling concurrent operations. Direct connections cannot be shared across different tasks and may cause errors in concurrent scenarios.</p>
 <p>Remember to properly clean up your async persisters when you’re done with them:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using as a context manager</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using as a context manager (recommended)</span>
 <span class="k">async</span> <span class="k">with</span> <span class="n">AsyncPGPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">use_pool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">persister</span><span class="p">:</span>
     <span class="c1"># Use persister here</span>
 
 <span class="c1"># Or manual cleanup</span>
-<span class="n">persister</span> <span class="o">=</span> <span class="n">AsyncPGPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">use_pool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncPGPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">use_pool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># Use persister here</span>
 <span class="k">finally</span><span class="p">:</span>

@@ -1611,14 +1611,21 @@ we provide a close() method.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_config">
-<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span>
 
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>,</dd>
 </dl>
 
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister" title="burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister"><span class="pre">AsyncSQLitePersister</span></a></span></span><a class="headerlink" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_config" title="Link to this definition">¶</a></dt>
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_AsyncPersisterContextManager</span></span></span><a class="headerlink" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_config" title="Link to this definition">¶</a></dt>
 <dd><p>Creates a new instance of the AsyncSQLitePersister from a configuration dictionary.</p>
+<p>Can be used with <code class="docutils literal notranslate"><span class="pre">await</span></code> or as an async context manager:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncSQLitePersister</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="c1"># or</span>
+<span class="k">async</span> <span class="k">with</span> <span class="n">AsyncSQLitePersister</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">persister</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <p>The config key:value pair needed are:
 db_path: str,
 table_name: str,
@@ -1628,7 +1635,7 @@ connect_kwargs: dict,</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_values">
-<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_values</span></span><span class="sig-paren">(</span>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_values</span></span><span class="sig-paren">(</span>
 
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
@@ -1637,8 +1644,15 @@ connect_kwargs: dict,</p>
 <dd><em class="sig-param"><span class="n"><span class="pre">connect_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 </dl>
 
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister" title="burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister"><span class="pre">AsyncSQLitePersister</span></a></span></span><a class="headerlink" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_values" title="Link to this definition">¶</a></dt>
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_AsyncPersisterContextManager</span></span></span><a class="headerlink" href="#burr.integrations.persisters.b_aiosqlite.AsyncSQLitePersister.from_values" title="Link to this definition">¶</a></dt>
 <dd><p>Creates a new instance of the AsyncSQLitePersister from passed in values.</p>
+<p>Can be used with <code class="docutils literal notranslate"><span class="pre">await</span></code> or as an async context manager:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncSQLitePersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="s2">&quot;test.db&quot;</span><span class="p">)</span>
+<span class="c1"># or</span>
+<span class="k">async</span> <span class="k">with</span> <span class="n">AsyncSQLitePersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="s2">&quot;test.db&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">persister</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1860,19 +1874,26 @@ If using a direct connection, just returns a new persister with the same connect
 
 <dl class="py method">
 <dt class="sig sig-object py" id="burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_config">
-<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span>
 
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>,</dd>
 </dl>
 
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister" title="burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister"><span class="pre">AsyncPostgreSQLPersister</span></a></span></span><a class="headerlink" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_config" title="Link to this definition">¶</a></dt>
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_AsyncPersisterContextManager</span></span></span><a class="headerlink" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_config" title="Link to this definition">¶</a></dt>
 <dd><p>Creates a new instance of the PostgreSQLPersister from a configuration dictionary.</p>
+<p>Can be used with <code class="docutils literal notranslate"><span class="pre">await</span></code> or as an async context manager:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncPostgreSQLPersister</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="c1"># or</span>
+<span class="k">async</span> <span class="k">with</span> <span class="n">AsyncPostgreSQLPersister</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">persister</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_values">
-<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_values</span></span><span class="sig-paren">(</span>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_values</span></span><span class="sig-paren">(</span>
 
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">db_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
@@ -1885,8 +1906,15 @@ If using a direct connection, just returns a new persister with the same connect
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pool_kwargs</span></span></em>,</dd>
 </dl>
 
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister" title="burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister"><span class="pre">AsyncPostgreSQLPersister</span></a></span></span><a class="headerlink" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_values" title="Link to this definition">¶</a></dt>
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_AsyncPersisterContextManager</span></span></span><a class="headerlink" href="#burr.integrations.persisters.b_asyncpg.AsyncPostgreSQLPersister.from_values" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a new instance of the PostgreSQLPersister from the provided values.</p>
+<p>Can be used with <code class="docutils literal notranslate"><span class="pre">await</span></code> or as an async context manager:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">persister</span> <span class="o">=</span> <span class="k">await</span> <span class="n">AsyncPostgreSQLPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="c1"># or</span>
+<span class="k">async</span> <span class="k">with</span> <span class="n">AsyncPostgreSQLPersister</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="k">as</span> <span class="n">persister</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
