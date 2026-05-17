@@ -220,12 +220,18 @@ class TaskBasedParallelAction(SingleStepAction):
                         query_llm.bind(model="o1").with_name("o1_answer"),
                         query_llm.bind(model="claude").with_name("claude_answer"),
                     ]
+                        # Route the application_id through self.sub_application_id so
+                        # subclasses can customize the sub-app cache/resume behavior --
+                        # e.g. salt with a fresh value per invocation to bypass a
+                        # cascading state_initializer's checkpoint hits. The default
+                        # hook is a stable deterministic hash and is what most users
+                        # want (it's load-bearing for retry-on-failure resume).
+                        key = f"{prompt}:{action.name}"  # any stable key you choose
                         yield SubGraphTask(
                             action=action, # can be a RunnableGraph as well
                             state=state.update(prompt=prompt),
                             inputs={},
-                            # stable hash -- up to you to ensure uniqueness
-                            application_id=hashlib.sha256(context.application_id + action.name + prompt).hexdigest(),
+                            application_id=self.sub_application_id(key, state, context),
                             # a few other parameters we might add -- see advanced usage -- failure conditions, etc...
                         )
 
